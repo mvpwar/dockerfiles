@@ -1,0 +1,2533 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>kzb PNG 资源小助手</title>
+<style>
+:root{
+  --bg:#f4f6f9;--panel:#fff;--line:#e2e6ec;--txt:#1f2430;--dim:#6c7686;
+  --acc:#2563eb;--green:#15a34a;--amber:#d97706;--red:#dc2626;--blue:#0284c7;
+}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%}
+body{font:14px/1.55 "Microsoft YaHei","Segoe UI",system-ui,sans-serif;background:var(--bg);color:var(--txt)}
+header{position:sticky;top:0;z-index:20;background:var(--panel);border-bottom:1px solid var(--line);padding:14px 18px 12px}
+h1{margin:0 0 10px;font-size:17px;font-weight:700;letter-spacing:.3px;display:flex;align-items:baseline;flex-wrap:wrap}
+h1 small{font-weight:400;color:var(--dim);font-size:12px;margin-left:10px}
+h1 .byline{margin-left:12px;align-self:center;font-size:12px;font-weight:600;color:var(--acc);background:#eef4ff;
+  border:1px solid #dbe6ff;border-radius:20px;padding:3px 13px;letter-spacing:.2px;white-space:nowrap}
+.slots{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.slot{border:2px dashed #c9d2e0;border-radius:10px;padding:10px 12px;background:#fbfcfe;cursor:pointer;transition:.15s;min-height:62px}
+.slot:hover{border-color:var(--acc);background:#f2f6ff}
+.slot.has{border-style:solid;border-color:var(--acc);background:#f5f8ff}
+.slot .t{font-weight:600;font-size:13px}
+.slot .n{color:var(--dim);font-size:12px;margin-top:4px;word-break:break-all}
+.slot .st{font-size:12px;margin-top:4px;color:var(--acc)}
+/* ★ 一个 app.sv 里可能有多个 kzb（bic_byd_stha.kzb / custom-theme/template.kzb / 3dscreen.kzb…）
+   ⇒ 槽里加一个选择器，切哪个看哪个（点它别触发「选文件」） */
+.slot .ksel{margin-top:7px;font-size:12px;display:none;border-top:1px dashed #d7dfeb;padding-top:7px;cursor:default}
+.slot .ksel.on{display:block}
+.slot .ksel .kh{color:var(--dim);margin-bottom:4px;line-height:1.5}
+.slot .ksel select{max-width:100%;font:inherit;font-size:12px;padding:3px 6px;
+  border:1px solid #c9d2e0;border-radius:7px;background:#fff;color:#1f2937;cursor:pointer}
+.slot .ksel select:hover{border-color:var(--acc)}
+.slot .ksel .knote{margin-top:4px;color:#b45309;line-height:1.5}
+input[type=file]{display:none}
+.bar{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-top:12px;font-size:13px}
+.chip{padding:3px 10px;border-radius:20px;background:#eef1f6;color:#3c4657;font-size:12px;white-space:nowrap}
+.chip.g{background:#e6f7ec;color:#15803d}
+.chip.a{background:#fdf1e3;color:#b45309}
+.chip.r{background:#fdeaea;color:#b91c1c}
+.chip.b{background:#e6f2fd;color:#0369a1}
+.chip.k{background:#eef1f6;color:#3c4657}
+select,input[type=text]{padding:5px 8px;border:1px solid var(--line);border-radius:7px;background:#fff;font:13px inherit;color:var(--txt)}
+button{padding:6px 13px;border:1px solid var(--line);border-radius:7px;background:#fff;cursor:pointer;font:13px inherit;color:var(--txt)}
+button:hover{border-color:var(--acc);color:var(--acc)}
+button.pri{background:var(--acc);border-color:var(--acc);color:#fff}
+button.pri:hover{background:#1d4ed8;color:#fff}
+main{padding:14px 18px 60px}
+#grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(272px,1fr));gap:12px}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:10px;overflow:hidden;cursor:pointer;transition:.12s}
+.card:hover{box-shadow:0 3px 14px rgba(30,50,90,.10);transform:translateY(-1px)}
+.card .thumbs{display:grid;grid-template-columns:1fr 1fr;gap:1px;background:var(--line);border-bottom:1px solid var(--line)}
+.card .th{position:relative;height:122px;display:flex;align-items:center;justify-content:center;overflow:hidden;
+  background:repeating-conic-gradient(#eef1f5 0 25%,#fff 0 50%) 0 0/14px 14px}
+.card .th img{max-width:100%;max-height:118px;image-rendering:auto}
+.card .th .tag{position:absolute;left:4px;top:4px;background:rgba(37,99,235,.9);color:#fff;
+  font-size:10px;font-weight:700;padding:1px 6px;border-radius:4px;line-height:14px;letter-spacing:.4px}
+.card .th.tb .tag{background:rgba(2,132,199,.9)}
+.card .th.none{color:#b3bac6;font-size:11.5px;text-align:center;padding:0 6px;line-height:1.35}
+.card .hd{display:flex;align-items:center;gap:8px;padding:7px 10px;border-bottom:1px solid var(--line);background:#fbfcfe}
+.card .hd input[type=checkbox]{width:15px;height:15px;margin:0;flex:none;cursor:pointer;accent-color:#2563eb}
+.card .hd .fn{flex:1;font-weight:600;font-size:12.5px;word-break:break-all;line-height:1.35}
+.card.sel{border-color:var(--acc);box-shadow:0 0 0 2px rgba(37,99,235,.18)}
+.card .meta{padding:8px 10px 9px}
+.card .fname{font-weight:600;font-size:12.5px;word-break:break-all;line-height:1.35}
+.card .cat{color:var(--dim);font-size:11px;margin-top:2px;word-break:break-all}
+.card .row{display:flex;justify-content:space-between;font-size:11.5px;margin-top:4px;color:#48505e}
+.card .row .lbl{color:var(--dim)}
+.dcl{margin-left:4px;color:#6b7280;font-size:10.5px;white-space:nowrap}
+.dcl.warn{color:#c2410c;font-weight:700}
+.dcl.none{color:#9aa2ad}
+.card .badge{display:inline-block;padding:1px 7px;border-radius:5px;font-size:11px;font-weight:600;white-space:nowrap;flex:none}
+.b-same{background:#e6f7ec;color:#15803d}
+.b-diff{background:#fdf1e3;color:#b45309}
+.b-onlyA{background:#fdeaea;color:#b91c1c}
+.b-onlyB{background:#e6f2fd;color:#0369a1}
+.b-solo{background:#eef1f6;color:#3c4657}
+/* ---- 卡片上的「替换方向」按钮 ---- */
+.card .patch{display:flex;gap:6px;padding:7px 10px;border-bottom:1px solid var(--line);background:#fafbfd}
+.card .patch button{flex:1;padding:5px 4px;font-size:11.5px;border-radius:6px;line-height:1.25;
+  display:flex;align-items:center;justify-content:center;gap:3px;min-width:0}
+.card .patch button .arw{font-weight:700;font-size:13px}
+.card .patch button.on{background:var(--acc);border-color:var(--acc);color:#fff;font-weight:600}
+.card .patch button.on:hover{background:#1d4ed8;color:#fff}
+.card .patch button.cu{border-color:#c4b5fd}
+.card .patch button.cu.on{background:#7c3aed;border-color:#7c3aed}
+/* ---- 顶部「替换 / 出包」操作条 ---- */
+.ops{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-top:10px;padding:9px 12px;
+  background:#eef4ff;border:1px solid #cddffb;border-radius:9px;font-size:13px}
+.ops .oc{font-weight:600;color:#134a9c}
+.ops .oc b{color:#0f3d85;font-size:14px}
+.ops .sp2{flex:1 1 18px}
+.ops button.go{background:#15a34a;border-color:#15a34a;color:#fff;font-weight:700;padding:7px 18px;font-size:13.5px}
+.ops button.go:hover{background:#118a3e;color:#fff}
+.ops button.go:disabled{background:#b9c7bd;border-color:#b9c7bd;color:#f2f5f3;cursor:not-allowed}
+.ops .tip{color:#5b6b83;font-size:12px}
+/* ---- 大图弹窗里的「换成本地图」---- */
+.pane .pickbtn{display:block;width:100%;margin-top:7px;padding:6px 8px;font-size:12px}
+.pane .cus{color:#7c3aed;font-weight:600}
+.card.s-diff{border-color:#f3c98b}
+.card.s-onlyA{border-color:#f0b0b0}
+.card.s-onlyB{border-color:#a9cdf0}
+dialog{border:none;border-radius:12px;padding:0;max-width:96vw;max-height:94vh;box-shadow:0 20px 60px rgba(20,30,60,.3)}
+dialog::backdrop{background:rgba(20,28,48,.55)}
+.dlg{padding:16px 18px 18px;min-width:min(900px,92vw)}
+.dlg h3{margin:0 0 4px;font-size:15px;word-break:break-all}
+.dlg .sub{color:var(--dim);font-size:12px;margin-bottom:12px;word-break:break-all}
+.cmp{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.cmp.one{grid-template-columns:1fr}
+.pane{border:1px solid var(--line);border-radius:9px;padding:9px;background:#fbfcfe}
+.pane .h{font-size:12px;font-weight:600;color:#3c4657;margin-bottom:6px}
+.pane .box{height:300px;display:flex;align-items:center;justify-content:center;
+  background:repeating-conic-gradient(#eef1f5 0 25%,#fff 0 50%) 0 0/16px 16px;border-radius:6px;overflow:auto}
+.pane .box img{max-width:100%;max-height:290px}
+.pane .i{font-size:11.5px;color:#48505e;margin-top:6px;font-family:Consolas,monospace}
+.close{position:absolute;right:14px;top:12px}
+.note{margin-top:12px;font-size:12.5px;color:var(--dim);background:#f1f5fb;border:1px solid #dae4f3;border-radius:8px;padding:9px 12px}
+button:disabled{opacity:.45;cursor:not-allowed}
+button:disabled:hover{border-color:var(--line);color:var(--txt)}
+.bar .sp{flex:1 1 24px}
+.pick{margin:14px 0 9px;font-weight:600;font-size:13.5px}
+.pbtns{display:flex;flex-wrap:wrap;gap:9px}
+.pbtns button{padding:9px 16px;font-size:13.5px}
+.pbtns button b{color:var(--acc);margin-left:2px}
+.pbtns button.pri b{color:#fff}
+.kp{display:flex;align-items:center;gap:7px;font-size:13px;color:#3c4657;margin-top:14px}
+.kp input{width:15px;height:15px;accent-color:#2563eb}
+.kp code, .note code{background:#eef1f6;padding:1px 5px;border-radius:4px;font-size:12px}
+.pfoot{text-align:right;margin-top:16px}
+/* 🔤 字体面板 */
+.fbtn{padding:4px 9px;font-size:12px;margin:2px 3px 2px 0;white-space:nowrap}
+.fbtn.on{background:#dcfce7;border-color:#86efac;color:#15803d;font-weight:600}
+.fbtn:disabled{opacity:.45;cursor:not-allowed}
+#fprev span[data-smp]{line-height:1.45}
+#fontDlg .dlg{width:min(980px,95vw);max-height:88vh;overflow:auto}
+#fontDlg .dlg h3{padding-right:90px}          /* 给右上角关闭按钮留位 */
+/* 📐 尺寸声明面板 */
+#declDlg .dlg{width:min(1040px,95vw);max-height:88vh;overflow:auto}
+#declDlg .dlg h3{padding-right:90px}
+.dwrap{margin-top:10px;border:1px solid var(--line);border-radius:9px;overflow:hidden}
+.dtbl{width:100%;border-collapse:collapse;font-size:13px}
+.dtbl th{text-align:left;font-size:11.5px;color:var(--dim);font-weight:600;padding:7px 9px;background:#f7f9fc;
+  border-bottom:1px solid var(--line);white-space:nowrap}
+.dtbl td{padding:8px 9px;border-bottom:1px solid #eff3f9;vertical-align:top}
+.dtbl tbody tr:last-child td{border-bottom:none}
+.dtbl tr.dirty td{background:#f2f8ff}
+.dtbl .sz{font:13px Consolas,monospace;font-weight:600;color:#1f2937;white-space:nowrap}
+.dtbl .cnt{font:12px Consolas,monospace;color:#5b6b83;white-space:nowrap}
+.dtbl input[type=number]{width:64px;padding:3px 6px;font-size:13px;border:1px solid var(--line);border-radius:6px;
+  font-family:Consolas,monospace}
+.dtbl button{padding:4px 10px;font-size:12px;white-space:nowrap}
+.dtbl .names{font:11px/1.6 Consolas,monospace;color:#59677d;word-break:break-all;max-width:380px}
+.dchip{display:inline-block;background:#eef1f6;border-radius:5px;padding:1px 6px;margin:1px 4px 1px 0;white-space:nowrap}
+.dsum{margin-top:12px;font-size:13px;color:#3c4657}
+.dsum b{color:var(--acc)}
+.dmsg{margin-top:9px;font-size:13px}
+.dmsg.on{padding:8px 12px;border-radius:8px;background:#e9f8ee;border:1px solid #b3e0c4;color:#116634;font-weight:600}
+.dmsg.warn{padding:8px 12px;border-radius:8px;background:#fdf7e6;border:1px solid #eeda9f;color:#8a5a00;font-weight:600}
+.hint{color:var(--dim);font-size:13px;padding:26px 4px;text-align:center}
+#alert{display:none;margin-top:12px;padding:11px 15px;border-radius:9px;font-size:13.5px;font-weight:600;line-height:1.5}
+#alert.on{display:block}
+#alert.err{background:#fdeaea;border:1px solid #f0b3b3;color:#a11414}
+#alert.warn{background:#fdf7e6;border:1px solid #eeda9f;color:#8a5a00}
+#alert.info{background:#e9f2ff;border:1px solid #b7d2f6;color:#134a9c}
+#alert.ok{background:#e9f8ee;border:1px solid #b3e0c4;color:#116634}
+#logbox{display:none;margin-top:10px;font:11.5px/1.6 Consolas,monospace;color:#48505e;background:#f8fafc;
+  border:1px solid var(--line);border-radius:9px;padding:8px 12px;max-height:132px;overflow:auto;white-space:pre-wrap}
+#logbox.on{display:block}
+video{display:none}
+/* ===== 预览底色 / 合成方式 ===== */
+.seg.on{background:var(--acc);border-color:var(--acc);color:#fff}
+.seg.on:hover{background:#1d4ed8;border-color:#1d4ed8;color:#fff}
+.lblx{font-size:12.5px;color:var(--dim);margin:0 1px 0 3px}
+.ckx{display:flex;align-items:center;gap:5px;font-size:12.5px;color:#3c4657;cursor:pointer;user-select:none;white-space:nowrap}
+.ckx input{width:15px;height:15px;margin:0;accent-color:#2563eb;cursor:pointer}
+body.bgw .card .th{background:#ffffff}
+body.bgd .card .th{background:#141414}
+body.bgw .pane .box{background:#ffffff}
+body.bgd .pane .box{background:#141414}
+body.bgd .card .th.none,body.bgd .pane .box{color:#8b93a1}
+.card .th canvas{max-width:100%;max-height:118px}
+.pane .box canvas{max-width:100%;max-height:290px}
+</style>
+</head>
+<body>
+<header>
+  <h1>kzb PNG 资源小助手 <small>选两个 app.sv / .kzb / 刷机包 zip，自动比对里面的 PNG 资源</small><span class="byline">by 福建宋plus车友群 Winamp</span></h1>
+  <div class="slots">
+    <div class="slot" id="slotA"><div class="t">① 文件 A</div><div class="n">拖进来，或点这里选择 app.sv / .kzb / .zip</div><div class="st"></div><div class="ksel"></div></div>
+    <div class="slot" id="slotB"><div class="t">② 文件 B</div><div class="n">拖进来，或点这里选择 app.sv / .kzb / .zip</div><div class="st"></div><div class="ksel"></div></div>
+  </div>
+  <div class="ops" id="ops"></div>
+  <div class="bar" id="bar"></div>
+  <div id="alert"></div>
+  <div id="logbox"></div>
+</header>
+<main>
+  <div id="grid"><div class="hint">两个文件都选好后，这里会列出 kzb 里的全部 PNG（按分类、可筛选、可只看差异）。</div></div>
+</main>
+<input type="file" id="fileA" accept=".sv,.kzb,.zip,.bin,application/octet-stream">
+<input type="file" id="fileB" accept=".sv,.kzb,.zip,.bin,application/octet-stream">
+<input type="file" id="filePng" accept="image/png,.png">
+<input type="file" id="fileTtf" accept=".ttf,.otf,.ttc,.woff,.woff2,font/*,application/octet-stream">
+<dialog id="dlg"><div class="dlg" id="dlgBody"></div><button class="close" onclick="document.getElementById('dlg').close()">关闭 ✕</button></dialog>
+<dialog id="pickDlg"><div class="dlg" id="pickBody"></div></dialog>
+<dialog id="buildDlg"><div class="dlg" id="buildBody"></div></dialog>
+<dialog id="warnDlg"><div class="dlg" id="warnBody"></div></dialog>
+<dialog id="fontDlg"><div class="dlg" id="fontBody"></div><button class="close" onclick="closeFontDlg()">关闭 ✕</button></dialog>
+<dialog id="declDlg"><div class="dlg" id="declBody"></div><button class="close" onclick="closeDeclDlg()">关闭 ✕</button></dialog>
+
+<script>
+"use strict";
+/* ===================== 工具函数 ===================== */
+const dec = new TextDecoder('latin1');
+/* tar 里可替换的字体条目（app.sv 的 ./base/app/rc_hmi/Resource_Font/*.ttf） */
+const FONT_RE = /\.(ttf|otf|ttc|woff2?)$/i;
+const FONT_MAGIC = {
+  '(TTF 轮廓)':   [0x00, 0x01, 0x00, 0x00],
+  'OTTO (CFF)':   [0x4f, 0x54, 0x54, 0x4f],
+  'true (Apple)': [0x74, 0x72, 0x75, 0x65],
+  'ttcf (集合)':  [0x74, 0x74, 0x63, 0x66],
+  'wOFF':         [0x77, 0x4f, 0x46, 0x46],
+  'wOF2':         [0x77, 0x4f, 0x46, 0x32]
+};
+function fontKind(b){                          // 返回字体类型名；识别不了返回 null
+  if (!b || b.length < 4) return null;
+  for (const k in FONT_MAGIC){
+    const m = FONT_MAGIC[k];
+    if (b[0] === m[0] && b[1] === m[1] && b[2] === m[2] && b[3] === m[3]) return k;
+  }
+  return null;
+}
+function latin1(u8){
+  const parts = [], CH = 0x8000;
+  for (let i = 0; i < u8.length; i += CH) parts.push(String.fromCharCode.apply(null, u8.subarray(i, i + CH)));
+  return parts.join('');
+}
+/* ---- 名字解码 ----
+   kzb 里 latin1 扫描的目的是拿到「字节偏移」，但路径名本身是 UTF-8
+   （实测有 197 个中文名，如 Images/Indicator/ABS故障.png）。
+   所以定位用 latin1、取名字时必须把字节区间按 UTF-8 重新解一次；
+   万一遇到 GBK 老包也能兜住。 */
+const TD_UTF8  = new TextDecoder('utf-8');
+const TD_UTF8F = new TextDecoder('utf-8', { fatal: true });
+let TD_GBK = null; try { TD_GBK = new TextDecoder('gbk'); } catch (e){}
+function decodeName(bytes){
+  let ascii = true;
+  for (let i = 0; i < bytes.length; i++) if (bytes[i] >= 0x80) { ascii = false; break; }
+  if (ascii) return String.fromCharCode.apply(null, bytes);
+  try { return TD_UTF8F.decode(bytes); } catch (e){}
+  if (TD_GBK){ try { return TD_GBK.decode(bytes); } catch (e){} }
+  return TD_UTF8.decode(bytes);
+}
+function sliceBytes(s, a, b){                  // latin1 串的 [a,b) → Uint8Array
+  const u = new Uint8Array(b - a);
+  for (let k = a; k < b; k++) u[k - a] = s.charCodeAt(k) & 0xff;
+  return u;
+}
+async function inflateRaw(u8){
+  const ds = new DecompressionStream('deflate-raw');
+  const st = new Blob([u8]).stream().pipeThrough(ds);
+  return new Uint8Array(await new Response(st).arrayBuffer());
+}
+async function gunzip(u8){
+  const ds = new DecompressionStream('gzip');
+  const st = new Blob([u8]).stream().pipeThrough(ds);
+  return new Uint8Array(await new Response(st).arrayBuffer());
+}
+const u32 = (u8, o) => (u8[o] | (u8[o+1] << 8) | (u8[o+2] << 16) | (u8[o+3] << 24)) >>> 0;
+const u32be = (u8, o) => ((u8[o] << 24) | (u8[o+1] << 16) | (u8[o+2] << 8) | u8[o+3]) >>> 0;
+const u16 = (u8, o) => (u8[o] | (u8[o+1] << 8));
+/* CRC32（zip / gzip 尾部用）；纯函数，放核心区方便测试切分 */
+let CRC_T = null;
+function crc32(u8){
+  if (!CRC_T){
+    CRC_T = new Uint32Array(256);
+    for (let n = 0; n < 256; n++){ let c = n; for (let k = 0; k < 8; k++) c = (c & 1) ? (0xEDB88320 ^ (c >>> 1)) : (c >>> 1); CRC_T[n] = c >>> 0; }
+  }
+  let c = 0xFFFFFFFF;
+  for (let i = 0; i < u8.length; i++) c = CRC_T[(c ^ u8[i]) & 0xFF] ^ (c >>> 8);
+  return ((c ^ 0xFFFFFFFF) >>> 0);
+}
+/* 提取某个条目的 PNG 字节：需要 {item, bytes} 形式 */
+const itemBytes = f => f.bytes.subarray(f.item.pngOff, f.item.pngOff + f.item.size);
+const fmt = n => n.toLocaleString('en-US');
+
+/* ===================== 容器解析 ===================== */
+// zip -> 找里面的 app.sv / .kzb
+async function fromZip(buf, log){
+  let eocd = -1;
+  const tail = Math.max(0, buf.length - 66000);
+  for (let i = buf.length - 22; i >= tail; i--) if (u32(buf, i) === 0x06054b50) { eocd = i; break; }
+  if (eocd < 0) throw new Error('不是有效的 zip 文件');
+  const n = u16(buf, eocd + 10);
+  let p = u32(buf, eocd + 16);
+  for (let k = 0; k < n; k++){
+    if (u32(buf, p) !== 0x02014b50) break;
+    const method = u16(buf, p + 10);
+    const csize = u32(buf, p + 20);
+    const nlen = u16(buf, p + 28), elen = u16(buf, p + 30), clen = u16(buf, p + 32);
+    const lho = u32(buf, p + 42);
+    const name = decodeName(buf.subarray(p + 46, p + 46 + nlen));
+    if (/\.(sv|kzb)$/i.test(name)){
+      const lnl = u16(buf, lho + 26), lel = u16(buf, lho + 28);
+      const off = lho + 30 + lnl + lel;
+      const data = buf.subarray(off, off + csize);
+      log('zip 内找到 ' + name + (method === 8 ? '（deflate 解压中）' : ''));
+      return { name, data: method === 8 ? await inflateRaw(data) : data };
+    }
+    p += 46 + nlen + elen + clen;
+  }
+  throw new Error('zip 里没有 .sv / .kzb');
+}
+// .sv -> 去 512B 脚注 -> gunzip -> tar -> 抽 kzb
+async function fromSv(buf, log){
+  if (!(buf[0] === 0x1f && buf[1] === 0x8b)) throw new Error('不是 gzip 流（.sv 头不对）');
+  log('识别为 .sv（gzip ' + fmt(buf.length) + ' B，去 512B 脚注后解压…）');
+  const gz = buf.subarray(0, buf.length - 512);
+  const foot = buf.subarray(buf.length - 512);
+  // 出包时要原样复刻 gzip 头 + 脚注头部
+  const meta = {
+    flg: gz[3], mtime: u32(gz, 4), xfl: gz[8], os: gz[9], fname: null,
+    footFront: foot.subarray(0, 0x120).slice()
+  };
+  if (meta.flg & 8){ let j = 10; while (j < gz.length && gz[j]) j++; meta.fname = dec.decode(gz.subarray(10, j)); }
+  const plain = await gunzip(gz);
+  log('解压得到 tar ' + fmt(plain.length) + ' B，扫描 tar 条目…');
+  let pos = 0, fallback = null, chosen = null;
+  const fonts = [];                       // ★ tar 里的字体条目（可在网页里替换）
+  const kzbs = [];                        // ★★ 包里【所有】kzb（主资源包 + template.kzb / 3dscreen.kzb…）
+  while (pos + 512 <= plain.length){
+    let allZero = true;
+    for (let i = 0; i < 512; i++) if (plain[pos + i]) { allZero = false; break; }
+    if (allZero) break;
+    let nEnd = 0; while (nEnd < 100 && plain[pos + nEnd]) nEnd++;
+    const name = decodeName(plain.subarray(pos, pos + nEnd));
+    const sizeStr = dec.decode(plain.subarray(pos + 124, pos + 136)).replace(/[\0 ]/g, '');
+    const size = parseInt(sizeStr, 8) || 0;
+    if (FONT_RE.test(name)) fonts.push({ name, short: name.split('/').pop(), pos, size });
+    // 注意：必须精确匹配 .kzb 结尾，否则会命中 bic_byd_stha.kzb.cfg / .txt
+    if (/\.kzb$/i.test(name)){
+      const sv = { tar: plain, pos, size, meta, fonts };
+      const cand = { name, short: name.split('/').pop(), size,
+                     data: plain.subarray(pos + 512, pos + 512 + size), sv, parsed: null };
+      kzbs.push(cand);
+      if (/bic_byd_stha\.kzb$/i.test(name)) chosen = cand;
+      else if (!fallback) fallback = cand;
+    }
+    pos += 512 + Math.ceil(size / 512) * 512;
+  }
+  /* ★ 扫完整遍再返回 —— 这样能一次拿到包里【全部】kzb，用户可以在槽里切换看哪个
+     （2026-10-12：其他作者的包里有 custom-theme/template.kzb + 3dscreen.kzb，
+      用户以为「图丢了」；2026-10-13：改成可切换，不再只是提示。） */
+  const pickK = chosen || fallback;
+  if (pickK){
+    pickK.fonts = fonts;
+    pickK.kzbs = kzbs;
+    pickK.mainIdx = kzbs.indexOf(chosen);
+    log('tar 里找到 ' + pickK.name + '（' + fmt(pickK.size) + ' B）' +
+        (kzbs.length > 1 ? '；包里共 ' + kzbs.length + ' 个 kzb（可在卡片里切换）' : ''));
+    return pickK;
+  }
+  throw new Error('tar 里没找到 .kzb 文件');
+}
+
+/* ===================== kzb 解析 ===================== */
+const PNG_SIG = '\x89PNG\r\n\x1a\n';
+function findTable(s, len){                     // 资源表：连续 6 条满足 idx==k（表首不一定 4 字节对齐！）
+  const rd = o => (s.charCodeAt(o) | (s.charCodeAt(o+1) << 8) | (s.charCodeAt(o+2) << 16) | (s.charCodeAt(o+3) << 24)) >>> 0;
+  const test = base => { for (let k = 0; k < 6; k++) if (rd(base + k * 24) !== k) return false; return true; };
+  if (test(0x1e0b5)) return 0x1e0b5;            // 已知常见位置，先试
+  const lim = Math.min(len - 24 * 6, 0x400000);
+  for (let base = 0; base < lim; base++){
+    if (rd(base) === 0 && rd(base + 24) === 1 && rd(base + 48) === 2 && test(base)) return base;
+  }
+  return -1;
+}
+/* ★ 资源数的位置不是固定的 —— kzb 头布局 = `KZBF | ver | namelen | name[namelen] | count`：
+   名字 12 字符（bic_byd_stha）⇒ count 在 0x18；名字 8 字符（3dscreen.kzb）⇒ 在 0x14。
+   旧代码把 0x18 写死 ⇒ 读到 17 亿 ⇒ 解析直接 RangeError 崩
+   （2026-10-13 由「其他作者的包」暴露）。
+   兜底链：按 namelen 算 → 0x18 → 按「表内 idx 从 0 连续到第几条」数出来。 */
+function kzbCount(u8, tbl, s){
+  const nl = u32(u8, 8);
+  const off = 0x0c + ((nl > 0 && nl < 4096) ? nl : 12);
+  let c = (off + 4 <= u8.length) ? u32(u8, off) : 0;
+  const ok = v => v > 0 && v <= 200000 && (tbl < 0 || tbl + v * 24 <= u8.length);
+  if (!ok(c)) c = u32(u8, 0x18);
+  if (!ok(c)) c = 0;
+  if (!c && tbl >= 0 && s) c = kzbCountByIdx(s, tbl, u8.length);
+  return c > 0 ? c : -1;
+}
+function kzbCountByIdx(s, tbl, len){           // 表里 idx 是 0,1,2… 连续编号 ⇒ 数到第一个不连续处
+  const rd = o => (s.charCodeAt(o) | (s.charCodeAt(o+1) << 8) | (s.charCodeAt(o+2) << 16) | (s.charCodeAt(o+3) << 24)) >>> 0;
+  let c = 0;
+  while (tbl + (c + 1) * 24 <= len && rd(tbl + c * 24) === c) c++;
+  return c;
+}
+function scanNames(s){
+  const out = [], seen = new Set();
+  const needle = '/Resource Files/';
+  let i = 0;
+  while (true){
+    i = s.indexOf(needle, i);
+    if (i < 0) break;
+    let j = i; while (j < s.length && s.charCodeAt(j) !== 0) j++;
+    const name = decodeName(sliceBytes(s, i, j));
+    if (/\.png$/i.test(name) && !seen.has(name)){ seen.add(name); out.push(name); }
+    i = j + 1;
+  }
+  return out;
+}
+function scanPngs(s, u8){
+  const out = [];
+  let i = 0;
+  while (true){
+    i = s.indexOf(PNG_SIG, i);
+    if (i < 0) break;
+    if (i >= 4){
+      const len = u32(u8, i - 4);
+      // PNG 末尾 12 字节 = IEND chunk：len(4) + "IEND"(4) + CRC(4) ⇒ "IEND" 在 i+len-8
+      if (len > 8 && i + len <= u8.length && u32(u8, i + len - 8) === 0x444e4549){
+        out.push({ off: i - 4, len, png: i, w: u32be(u8, i + 16), h: u32be(u8, i + 20) });
+        i += len; continue;
+      }
+    }
+    i += 8;
+  }
+  return out;
+}
+/* ---- 纹理「声明尺寸」解析（[u32 126][f32 高] … [u32 64][f32 宽]，紧跟纹理 URL） ---- */
+const f32le = (u8, o) => { try { return new DataView(u8.buffer, u8.byteOffset + o, 4).getFloat32(0, true); } catch (e) { return NaN; } };
+const ALNU = c => (c >= 48 && c <= 57) || (c >= 65 && c <= 90) || (c >= 97 && c <= 122) || c === 95;
+function scanTexNames(s, lim){
+  // 只在「名字池」区域扫（0x1c ~ 资源表起点）—— 那里都是规范的 \0 结尾条目；
+  // 若扫全文件，URL 尾部紧跟的 0x7E（= u32 126 的首字节）会被当成名字的一部分（踩过）。
+  const out = [], seen = new Set(), needle = '/Textures/';
+  const end = (lim > 0) ? Math.min(lim, s.length) : s.length;
+  let i = 0;
+  while (true){
+    i = s.indexOf(needle, i);
+    if (i < 0 || i >= end) break;
+    let j = i; while (j < end && s.charCodeAt(j) !== 0) j++;
+    const L = j - i;
+    if (L > 8 && L < 200){
+      const raw = s.slice(i, j);                     // latin1（字节）—— 用于在二进制里查找
+      if (!seen.has(raw)){
+        seen.add(raw);
+        out.push({ raw, disp: decodeName(sliceBytes(s, i, j)) });   // disp：与 PNG 名同编码
+      }
+    }
+    i = j + 1;
+  }
+  return out;
+}
+function scanDeclMap(s, u8, texNames){
+  const map = {}, cap = u8.length - 12;
+  for (const T of texNames){
+    const tn = T.raw;                                   // 用字节形式在二进制里找
+    const occ = [];
+    let start = 0;
+    while (true){
+      const i = s.indexOf(tn, start);
+      if (i < 0) break;
+      start = i + 1;
+      const e = i + tn.length;
+      if (e < s.length && s.charCodeAt(e) !== 0 && ALNU(s.charCodeAt(e))) continue;
+      let p126 = -1;
+      for (let k = e; k < Math.min(e + 64, cap); k++) if (u32(u8, k) === 126){ p126 = k; break; }
+      if (p126 < 0) continue;
+      const h = f32le(u8, p126 + 4);
+      let p64 = -1;
+      for (let k = p126 + 4; k < Math.min(p126 + 64, cap); k++) if (u32(u8, k) === 64){ p64 = k; break; }
+      if (p64 < 0) continue;
+      const w = f32le(u8, p64 + 4);
+      if (h > 0.5 && h < 4000 && w > 0.5 && w < 4000) occ.push([h, w]);
+    }
+    if (occ.length) map[T.disp] = occ;                  // key 用显示名（与 items 同编码）
+  }
+  return map;
+}
+async function parseKzb(u8, log){
+  const s = latin1(u8);
+  if (s.slice(0, 4) !== 'KZBF') throw new Error('不是 kzb 文件（缺少 KZBF 头）');
+  const tbl = findTable(s, u8.length);
+  if (tbl < 0) throw new Error('没找到资源表');
+  const count = kzbCount(u8, tbl, s);
+  if (count < 0) throw new Error('资源数读不出（表 @0x' + tbl.toString(16) + '）—— 这个 kzb 的头结构和已知的不一样，把这个包发我看看');
+  const cntIdx = kzbCountByIdx(s, tbl, u8.length);
+  log('kzb ' + fmt(u8.length) + ' B，资源数 ' + count + '（名字 ' + u32(u8, 8) + ' 字符），资源表 @0x' + tbl.toString(16) +
+      (cntIdx && cntIdx !== count ? '　⚠ 按表内编号数出 ' + cntIdx + ' 条（以头部声明为准）' : ''));
+  /* ★ 资源表结构体检（加载时就报，不用等出包）—— 换新固件时先看这一行 */
+  {
+    const offs = [], lens = [];
+    for (let k = 0; k < count; k++){ offs.push(u32(u8, tbl + k * 24 + 8)); lens.push(u32(u8, tbl + k * 24 + 12)); }
+    let ovf = 0;
+    for (let k = 0; k < count; k++) if (offs[k] + lens[k] > u8.length) ovf++;
+    let dis = 0;                                     // 乱序：后一条 off 比前一条小
+    for (let k = 1; k < count; k++) if (offs[k] < offs[k - 1]) dis++;
+    const ord = offs.map((v, i) => i).sort((a, b) => offs[a] - offs[b]);
+    let ovl = 0;                                     // 物理序重叠（病态表）
+    for (let t = 1; t < count; t++) if (offs[ord[t]] < offs[ord[t - 1]] + lens[ord[t - 1]]) ovl++;
+    log('资源表结构：' + count + ' 条' + (dis ? ('，其中 ' + dis + ' 处乱序（不影响出包）') : '，off 严格递增'));
+    if (ovf) log('⚠ 资源表有 ' + ovf + ' 条越界 —— 这个包的表可能本身就有问题');
+    if (ovl) log('⚠ 资源表物理序有 ' + ovl + ' 处重叠 —— 这个包的表不规范，出包前请留意');
+  }
+  const names = scanNames(s);
+  const pngs = scanPngs(s, u8);
+  log('名字池 ' + names.length + ' 条 / PNG 条目 ' + pngs.length + ' 张' + (names.length === pngs.length ? '（一一对应）' : '（数量不一致，按序配对）'));
+  const items = [];
+  // 声明尺寸：纹理名 → 出现处的 (高, 宽) 列表
+  const texNames = scanTexNames(s, tbl);
+  const declMap = scanDeclMap(s, u8, texNames);
+  const byBase = {};
+  for (const t of Object.keys(declMap)){ const b = t.split('/').pop(); (byBase[b] = byBase[b] || []).push(t); }
+  log('纹理名 ' + texNames.length + ' 条，其中带尺寸声明的 ' + Object.keys(declMap).length + ' 条');
+  const relOf = full => full.replace('/Resource Files/Images/', '');
+  // 两轮匹配：路径精确优先，basename 唯一兜底（同一纹理只能归一个 PNG）
+  const off2idx = new Map();                       // PNG 长度字段偏移 → 资源表序号（出包要用）
+  for (let k = 0; k < count; k++) off2idx.set(u32(u8, tbl + k * 24 + 8) + 16, k);   // 表里存的是条目头，+16 才是长度字段
+  /* ★★ 关键修正（2026-10-09）：名字池第 k 个名字 ↔ 按【资源表序号】升序的第 k 个 PNG 条目。
+     绝不能按「物理 off 顺序」配对！有些包的资源表存在 off 逆序条目（小熊猫 10-09 固件有 12 处），
+     一旦按 off 排序，逆序点之后的一批名字会整体错位 → 换图换到错误资源上
+     → 实机表现为「深色模式贴图错乱」（10-09 踩过；后来用差异清单的尺寸交叉验证才定位：
+     off 序只能对上 200/209，idx 序 209/209）。
+     另外：直接扫 PNG 签名会有误检（实测多出 6 个），用「长度字段位置 == 资源表 off+16」过滤，
+     能精确还原真条目。 */
+  const pngMap = pngs.filter(p => off2idx.has(p.off));
+  const pngsByIdx = pngMap.slice().sort((x, y) => off2idx.get(x.off) - off2idx.get(y.off));
+  const _ids = pngsByIdx.map(p => off2idx.get(p.off));
+  if (_ids.some((v, i) => i > 0 && v <= _ids[i - 1])) log('⚠ 资源序号非严格递增（可能混入误检），配对可能不准');
+  if (pngMap.length !== names.length)
+    log('⚠ 名字 ' + names.length + ' 条 / 已确认 PNG ' + pngMap.length + ' 张（数量不一致，按少的配对）');
+  else log('名字 ↔ PNG 条目一一对应（' + names.length + ' 条，按资源序号升序）');
+  const n = Math.min(names.length, pngsByIdx.length);
+  const pick = new Array(n), taken = new Set();
+  for (let k = 0; k < n; k++){
+    const cand = '/Textures/' + relOf(names[k]).replace(/\.png$/i, '');
+    if (declMap[cand] && !taken.has(cand)){ pick[k] = { occ: declMap[cand], how: '路径' }; taken.add(cand); }
+  }
+  for (let k = 0; k < n; k++){
+    if (pick[k]) continue;
+    const bl = (byBase[relOf(names[k]).split('/').pop().replace(/\.png$/i, '')] || []).filter(t => !taken.has(t));
+    if (bl.length === 1){ pick[k] = { occ: declMap[bl[0]], how: 'basename' }; taken.add(bl[0]); }
+  }
+  for (let k = 0; k < n; k++){
+    const full = names[k], p = pngsByIdx[k];
+    if (!p) continue;
+    const base = full.split('/').pop();
+    const cat = full.replace('/Resource Files/', '').split('/').slice(0, -1).join('/') || '(根)';
+    const sel = pick[k];
+    let decl = null, declAll = null, declMulti = false;
+    if (sel){
+      const g = {};
+      for (const hw of sel.occ){ const kk = hw[0] + '|' + hw[1]; g[kk] = (g[kk] || 0) + 1; }
+      declAll = Object.keys(g).sort((x, y) => g[y] - g[x]).map(kk => kk.split('|').map(Number));
+      decl = declAll[0]; declMulti = declAll.length > 1;
+    }
+    items.push({ full, base, cat, size: p.len, w: p.w, h: p.h, pngOff: p.png, key: full,
+                 idx: off2idx.get(p.off), decl, declAll, declMulti, declHow: sel ? sel.how : '' });
+  }
+  /* ★ 2026-10-12：有些第三方包（例：另一位作者的「d+」包）PNG 条目比名字多 ——
+     多出来的那几张原本会【凭空消失】（工具按名字列图），用户以为"图没了"。
+     现在把它们也列出来：名字显示为「(无名字) #idx」，key 用 @idx:N 保证唯一，
+     照样能预览 / 替换 / 出包（按 idx 定位）。 */
+  let nameless = 0;
+  for (let k = n; k < pngsByIdx.length; k++){
+    const p = pngsByIdx[k];
+    if (!p) continue;
+    const idx = off2idx.has(p.off) ? off2idx.get(p.off) : -1;
+    items.push({ full: '', base: '\u65e0\u540d\u5b57 #' + idx, cat: '\uff08\u65e0\u540d\u5b57\u7684\u56fe\uff09',
+                 size: p.len, w: p.w, h: p.h, pngOff: p.png, key: '@idx:' + idx, idx,
+                 decl: null, declAll: null, declMulti: false, declHow: '', nameless: true });
+    nameless++;
+  }
+  if (nameless) log('\u26a0 \u6709 ' + nameless + ' \u5f20\u56fe\u5728\u5305\u91cc\u3010\u6ca1\u6709\u540d\u5b57\u3011' +
+    '\uff08PNG \u6761\u76ee\u6bd4\u540d\u5b57\u591a\uff09\u21d2 \u5df2\u6309 idx \u5217\u5728\u6700\u540e\uff0c\u540d\u5b57\u663e\u793a\u4e3a\u300c(\u65e0\u540d\u5b57)\u300d\u3002' +
+    '\u82e5\u53d1\u73b0\u56fe\u540d\u5bf9\u4e0d\u4e0a\uff0c\u8bf7\u628a\u4e24\u4e2a\u5305\u90fd\u52a0\u8f7d\u540e\u5bf9\u6bd4\u6838\u5b9e\u3002');
+  return { items, bytes: u8, count, names: names.length, pngs: pngs.length, nameless,
+           decls: Object.keys(declMap).length, declMap, declsAll: scanAllDecls(u8) };
+}
+/* ---- kzb 内「尺寸声明」的全量扫描（属于解析层：只依赖字节，与 UI / S 槽无关）----
+   结构：[u32 126][f32 高] …（中间可插其它 tag，如 [127][1.0]）… [u32 64][f32 宽]
+   判据与 Python 侧一字不差（`_decl_loose.py` / `_scan1011_decl.py`）。
+   ⚠️ 不要用上面的 `scanDeclMap` 来做「改声明」：它只从名字池的 /Textures/ 名字往后找，
+      数字字形声明、NORMAL 节点声明（后面跟的是节点引用/变换参数）根本扫不到。 */
+const DECL_CACHE = new WeakMap();
+function scanAllDecls(u8){
+  const hit = DECL_CACHE.get(u8);
+  if (hit) return hit;
+  const res = [], cap = u8.length - 12;
+  let i = 0;
+  while (i < cap){
+    const p = u8.indexOf(0x7e, i);               // u32 126 的首字节
+    if (p < 0 || p >= cap) break;
+    i = p + 1;
+    if (!(u8[p + 1] === 0 && u8[p + 2] === 0 && u8[p + 3] === 0)) continue;
+    let q = -1;
+    for (let s2 = p + 4; s2 < p + 40; s2 += 4){  // 40 字节内找 64（中间不跨另一个 126）
+      const v = u32(u8, s2);
+      if (v === 126) break;
+      if (v === 64){ q = s2; break; }
+    }
+    if (q < 0) continue;
+    const h = f32le(u8, p + 4), w = f32le(u8, q + 4);
+    if (!(h > 0 && h <= 3000 && w > 0 && w <= 3000)) continue;
+    res.push({ p, h, w, q, hOff: p + 4, wOff: q + 4, name: declNameAt(u8, q) });
+  }
+  DECL_CACHE.set(u8, res);
+  return res;
+}
+function declNameAt(u8, q){                      // 声明后紧跟的名字；跟的是节点引用 ⇒ 无名
+  const cap = u8.length - 8;
+  for (let off = 0; off < 44; off += 4){
+    const k = q + 8 + off;
+    if (k >= cap) break;
+    if (u32(u8, k) === 113){
+      const L = u32(u8, k + 4);
+      if (L > 0 && L < 300 && k + 8 + L <= u8.length){
+        try { return new TextDecoder('utf-8', { fatal: true }).decode(u8.subarray(k + 8, k + 8 + L)); }
+        catch (e){ return ''; }
+      }
+    }
+  }
+  return '';
+}
+// 链式解包：zip → app.sv → kzb ；或 .sv → kzb ；或直接 kzb
+async function toKzb(buf, log){
+  let cur = { name: '', data: buf };
+  for (let hop = 0; hop < 4; hop++){
+    const d = cur.data;
+    if (d.length > 4 && d[0] === 0x4b && d[1] === 0x5a && d[2] === 0x42 && d[3] === 0x46){ log('识别为 kzb'); return cur; }
+    if (d[0] === 0x1f && d[1] === 0x8b){ cur = await fromSv(d, log); continue; }
+    if (d[0] === 0x50 && d[1] === 0x4b){ cur = await fromZip(d, log); continue; }
+    throw new Error('无法识别的内容（既不是 kzb / .sv / zip）');
+  }
+  throw new Error('解开多层后仍未找到 kzb');
+}
+
+/* ===================== 状态提示（醒目横幅 + 日志 + 全局兜底） ===================== */
+const LOG = [];
+function alertMsg(kind, text){
+  const el = document.getElementById('alert');
+  if (!el) return;
+  el.className = kind ? ('on ' + kind) : '';
+  el.textContent = text || '';
+}
+function hideAlert(){ alertMsg('', ''); }
+function pushLog(tag, msg){
+  LOG.push('[' + tag + '] ' + msg);
+  const lb = document.getElementById('logbox');
+  if (lb){ lb.className = 'on'; lb.textContent = LOG.slice(-16).join('\n'); lb.scrollTop = lb.scrollHeight; }
+}
+window.onerror = (m, s, l) => { alertMsg('err', '脚本出错：' + m + '（第 ' + l + ' 行）'); return false; };
+window.addEventListener('unhandledrejection', e => {
+  const r = e.reason;
+  const where = (r && r.stack) ? ' ｜ ' + String(r.stack).split('\n').slice(1, 2).join('').trim() : '';
+  alertMsg('err', '运行出错：' + (r && r.message ? r.message : String(r)) + where);
+});
+(function checkEnv(){
+  const miss = [];
+  if (typeof DecompressionStream === 'undefined') miss.push('DecompressionStream（解压 .sv 必需）');
+  if (typeof File === 'undefined' || !File.prototype.arrayBuffer) miss.push('File.arrayBuffer');
+  if (miss.length){
+    setTimeout(() => alertMsg('warn', '⚠ 当前浏览器缺少：' + miss.join('、') +
+      '。请改用 Chrome / Edge / Firefox 的较新版本打开本页（或把 html 拷到别的浏览器里双击打开）。'), 60);
+  }
+})();
+
+/* ===================== 出包：网页内替换 → app.sv ===================== */
+/* MD5（浏览器无内置，自实现；返回 32 位小写 hex） */
+function md5hex(bytes){
+  const K = new Uint32Array(64);
+  for (let i = 0; i < 64; i++) K[i] = Math.floor(Math.abs(Math.sin(i + 1)) * 4294967296) | 0;
+  const S = [7,12,17,22,7,12,17,22,7,12,17,22,7,12,17,22,
+             5,9,14,20,5,9,14,20,5,9,14,20,5,9,14,20,
+             4,11,16,23,4,11,16,23,4,11,16,23,4,11,16,23,
+             6,10,15,21,6,10,15,21,6,10,15,21,6,10,15,21];
+  const len = bytes.length;
+  const padLen = Math.ceil((len + 9) / 64) * 64;          // 必须这样算（+1 个 0x80 + 8 字节长度）
+  const buf = new Uint8Array(padLen);
+  buf.set(bytes);
+  buf[len] = 0x80;
+  const dv = new DataView(buf.buffer);
+  const bits = len * 8;
+  dv.setUint32(padLen - 8, bits >>> 0, true);
+  dv.setUint32(padLen - 4, Math.floor(bits / 4294967296) >>> 0, true);
+  let a0 = 0x67452301, b0 = 0xefcdab89, c0 = 0x98badcfe, d0 = 0x10325476;
+  const M = new Uint32Array(16);
+  for (let off = 0; off < padLen; off += 64){
+    for (let i = 0; i < 16; i++) M[i] = dv.getUint32(off + i * 4, true);
+    let A = a0, B = b0, C = c0, D = d0;
+    for (let i = 0; i < 64; i++){
+      let F, g;
+      if (i < 16){ F = (B & C) | (~B & D); g = i; }
+      else if (i < 32){ F = (D & B) | (~D & C); g = (5 * i + 1) & 15; }
+      else if (i < 48){ F = B ^ C ^ D; g = (3 * i + 5) & 15; }
+      else { F = C ^ (B | ~D); g = (7 * i) & 15; }
+      F = (F + A + K[i] + M[g]) | 0;
+      A = D; D = C; C = B;
+      B = (B + ((F << S[i]) | (F >>> (32 - S[i])))) | 0;
+    }
+    a0 = (a0 + A) | 0; b0 = (b0 + B) | 0; c0 = (c0 + C) | 0; d0 = (d0 + D) | 0;
+  }
+  const out = new Uint8Array(16), odv = new DataView(out.buffer);
+  odv.setUint32(0, a0 >>> 0, true); odv.setUint32(4, b0 >>> 0, true);
+  odv.setUint32(8, c0 >>> 0, true); odv.setUint32(12, d0 >>> 0, true);
+  let h = '';
+  for (let i = 0; i < 16; i++) h += out[i].toString(16).padStart(2, '0');
+  return h;
+}
+/* 组装 .sv：raw deflate + 复刻源包 gzip 头 + CRC32/ISIZE + 512B 脚注(MD5) */
+async function buildSvBytes(tarBytes, meta){
+  const cs = new CompressionStream('deflate-raw');
+  const w = cs.writable.getWriter();
+  const p = w.write(tarBytes).then(() => w.close());
+  const defl = new Uint8Array(await new Response(cs.readable).arrayBuffer());
+  await p;
+  const fn = meta.fname ? new TextEncoder().encode(meta.fname) : null;
+  const hdrLen = 10 + (fn ? fn.length + 1 : 0);
+  const hdr = new Uint8Array(hdrLen);
+  hdr[0] = 0x1f; hdr[1] = 0x8b; hdr[2] = 0x08; hdr[3] = meta.flg;
+  new DataView(hdr.buffer).setUint32(4, meta.mtime >>> 0, true);
+  hdr[8] = meta.xfl; hdr[9] = meta.os;
+  if (fn) hdr.set(fn, 10);
+  const tail = new Uint8Array(8), tdv = new DataView(tail.buffer);
+  tdv.setUint32(0, crc32(tarBytes) >>> 0, true);
+  tdv.setUint32(4, tarBytes.length >>> 0, true);
+  const gz = new Uint8Array(hdrLen + defl.length + 8);
+  gz.set(hdr, 0); gz.set(defl, hdrLen); gz.set(tail, hdrLen + defl.length);
+  const foot = new Uint8Array(512);
+  foot.set(meta.footFront, 0);
+  const h = md5hex(gz);
+  for (let i = 0; i < 32; i++) foot[0x120 + i] = h.charCodeAt(i);
+  new DataView(foot.buffer).setUint32(0x140, tarBytes.length >>> 0, true);
+  const sv = new Uint8Array(gz.length + 512);
+  sv.set(gz); sv.set(foot, gz.length);
+  return sv;
+}
+/* kzb 区间「变长替换」+ 重算资源表（targets: Map(idx → Uint8Array)） */
+function rebuildKzb(s, kzb, targets){
+  const TBL = findTable(s, kzb.length);
+  if (TBL < 0) throw new Error('没找到资源表');
+  const N = kzbCount(kzb, TBL, s);
+  if (N < 0) throw new Error('资源数读不出（表 @0x' + TBL.toString(16) + '）');
+  const offs = new Int32Array(N), lens = new Uint32Array(N);
+  for (let k = 0; k < N; k++){ offs[k] = u32(kzb, TBL + k * 24 + 8); lens[k] = u32(kzb, TBL + k * 24 + 12); }
+  /* ★ 乱序检测：有些包的资源表 off 并不按 idx 递增（例：「熊猫定制版」有 3 条
+     idx 418/3132/3134 逻辑上排前面、物理数据却被作者放在文件尾）。
+     旧算法按「idx 区间」重建 + 只把区间之后的条目整体平移 Δ，
+     那些乱序条目的 off 不会被前移 ⇒ 越界 ⇒ 数据丢失 ⇒ 刷进去黑屏。
+     ⇒ 现统一改为「按物理 off 顺序重建整个数据区」，递增包与乱序包都正确。 */
+  const badIdx = [];
+  for (let k = 1; k < N; k++) if (offs[k] < offs[k - 1]) badIdx.push(k);
+  const phys = Array.from({ length: N }, (_, i) => i).sort((a, b) => offs[a] - offs[b]);
+  const padOf = k => Math.ceil(lens[k] / 4) * 4;
+  const dataStart = offs[phys[0]];
+  const parts = [], newOff = new Int32Array(N), newLen = new Uint32Array(N);
+  let cur = dataStart;
+  for (let t = 0; t < phys.length; t++){
+    const k = phys[t];
+    const o = offs[k];
+    /* 「物理段」= [本条 off, 下一条 off)（最后一条到文件尾）。
+       ★ 不能假设条目按 4 字节对齐填充 —— 实测有包（熊猫版末条 idx 3134）
+         len 不是 4 的倍数且文件直接结束；用 pad 取数会多吃字节、把总长搞坏。
+         整段取可保证「零替换 ⇒ 逐字节还原」，与是否有对齐无关。 */
+    const ge = (t + 1 < phys.length) ? offs[phys[t + 1]] : kzb.length;
+    newOff[k] = cur;
+    if (targets.has(k)){
+      const pl = targets.get(k);
+      const entLen = 20 + pl.length, pad = (4 - (entLen % 4)) % 4;
+      const ent = new Uint8Array(entLen + pad);
+      ent.set(kzb.subarray(o, o + 16), 0);
+      new DataView(ent.buffer).setUint32(16, pl.length, true);
+      ent.set(pl, 20);
+      newLen[k] = 20 + pl.length;
+      parts.push(ent); cur += ent.length;
+      /* 原条目本体之后、下一物理条目之前的字节（对齐填充 / 孤儿数据）原样保留 */
+      const body = o + Math.min(padOf(k), ge - o);
+      if (ge > body){ const g = kzb.subarray(body, ge); parts.push(g); cur += g.length; }
+    } else {
+      const raw = kzb.subarray(o, ge);          // 条目本体 + 尾随字节，整段原样
+      newLen[k] = lens[k];
+      parts.push(raw); cur += raw.length;
+    }
+  }
+  const out = new Uint8Array(cur);
+  let p = 0;
+  out.set(kzb.subarray(0, dataStart), p); p += dataStart;
+  for (const q of parts){ out.set(q, p); p += q.length; }
+  const to = new DataView(out.buffer);
+  for (let k = 0; k < N; k++){
+    to.setUint32(TBL + k * 24 + 8, newOff[k], true);
+    to.setUint32(TBL + k * 24 + 12, newLen[k], true);
+    to.setUint32(TBL + k * 24 + 20, newLen[k], true);
+  }
+  return { kzb: out, delta: out.length - kzb.length, TBL, N, newOff, newLen, badIdx };
+}
+/* tar 手术：只改 kzb 条目的 size + 重算 header chksum，其余字节原样 */
+function tarReplaceKzb(sv, newKzb){
+  const { tar, pos, size } = sv;
+  const oldPad = Math.ceil(size / 512) * 512;
+  const newPad = Math.ceil(newKzb.length / 512) * 512;
+  const hdr = tar.subarray(pos, pos + 512).slice();
+  const sz = newKzb.length.toString(8).padStart(11, '0') + '\0';
+  for (let i = 0; i < 12; i++) hdr[124 + i] = sz.charCodeAt(i);
+  for (let i = 148; i < 156; i++) hdr[i] = 0x20;
+  let sum = 0; for (let i = 0; i < 512; i++) sum += hdr[i];
+  const cs = sum.toString(8).padStart(6, '0') + '\0 ';
+  for (let i = 0; i < 8; i++) hdr[148 + i] = cs.charCodeAt(i);
+  const tailStart = pos + 512 + oldPad;
+  const out = new Uint8Array(tar.length - oldPad + newPad);
+  out.set(tar.subarray(0, pos), 0);
+  out.set(hdr, pos);
+  out.set(newKzb, pos + 512);
+  out.set(tar.subarray(tailStart), pos + 512 + newPad);
+  return { tar: out, oldPad, newPad };
+}
+/* ★ 通用 tar 重建：可同时替换多个条目（kzb + 字体 …）
+   patches: Map<条目头起始 pos, Uint8Array 新内容>
+   保留条目顺序与「未替换条目的原始字节」，只重写被替换条目的 header(size/chksum) + 数据 + 512 对齐 */
+function tarRebuild(tar, patches){
+  const chunks = [], info = [];
+  let pos = 0, guard = 0;
+  while (pos + 512 <= tar.length){
+    let allZero = true;
+    for (let i = 0; i < 512; i++) if (tar[pos + i]) { allZero = false; break; }
+    if (allZero) break;
+    let nEnd = 0; while (nEnd < 100 && tar[pos + nEnd]) nEnd++;
+    const name = decodeName(tar.subarray(pos, pos + nEnd));
+    const sizeStr = dec.decode(tar.subarray(pos + 124, pos + 136)).replace(/[\0 ]/g, '');
+    const size = parseInt(sizeStr, 8) || 0;
+    const pad = Math.ceil(size / 512) * 512;
+    if (patches.has(pos)){
+      const nb = patches.get(pos);
+      const nh = tar.subarray(pos, pos + 512).slice();
+      const sz = nb.length.toString(8).padStart(11, '0') + '\0';
+      for (let i = 0; i < 12; i++) nh[124 + i] = sz.charCodeAt(i);
+      for (let i = 148; i < 156; i++) nh[i] = 0x20;
+      let sum = 0; for (let i = 0; i < 512; i++) sum += nh[i];
+      const cs = sum.toString(8).padStart(6, '0') + '\0 ';
+      for (let i = 0; i < 8; i++) nh[148 + i] = cs.charCodeAt(i);
+      chunks.push(nh);
+      const npad = Math.ceil(nb.length / 512) * 512;
+      const blk = new Uint8Array(npad);
+      blk.set(nb);
+      chunks.push(blk);
+      info.push({ name, pos, oldSize: size, newSize: nb.length });
+    } else {
+      chunks.push(tar.subarray(pos, pos + 512 + pad));
+      info.push({ name, pos, oldSize: size, newSize: size });
+    }
+    pos += 512 + pad;
+    if (++guard > 100000) throw new Error('tar 解析异常（条目过多）');
+  }
+  const tail = tar.subarray(pos);
+  let total = tail.length;
+  for (const c of chunks) total += c.length;
+  const out = new Uint8Array(total);
+  let o = 0;
+  for (const c of chunks){ out.set(c, o); o += c.length; }
+  out.set(tail, o);
+  return { tar: out, info, tailLen: tail.length, endPos: pos };
+}
+/* 在（重建后的）tar 里按条目名取内容 —— 用于出包自检 */
+function tarEntryBytes(tar, wantName){
+  let pos = 0;
+  while (pos + 512 <= tar.length){
+    let allZero = true;
+    for (let i = 0; i < 512; i++) if (tar[pos + i]) { allZero = false; break; }
+    if (allZero) break;
+    let nEnd = 0; while (nEnd < 100 && tar[pos + nEnd]) nEnd++;
+    const name = decodeName(tar.subarray(pos, pos + nEnd));
+    const size = parseInt(dec.decode(tar.subarray(pos + 124, pos + 136)).replace(/[\0 ]/g, ''), 8) || 0;
+    if (name === wantName) return tar.subarray(pos + 512, pos + 512 + size);
+    pos += 512 + Math.ceil(size / 512) * 512;
+  }
+  return null;
+}
+/* ===================== 出包主流程 ===================== */
+/* PNG 尺寸：只读 IHDR（8B 签名 + 4B 长度 + 4B 'IHDR' ⇒ 宽在 16、高在 20，大端） */
+function pngWH(b){
+  if (!b || b.length < 24) return null;
+  if (!(b[0] === 0x89 && b[1] === 0x50 && b[2] === 0x4E && b[3] === 0x47)) return null;
+  const w = ((b[16] << 24) | (b[17] << 16) | (b[18] << 8) | b[19]) >>> 0;
+  const h = ((b[20] << 24) | (b[21] << 16) | (b[22] << 8) | b[23]) >>> 0;
+  return { w, h };
+}
+/* 汇总替换指令 → 按「替换进哪个包」分组 */
+function collectPatches(){
+  const amap = new Map((S.A ? S.A.items : []).map(i => [i.key, i]));
+  const bmap = new Map((S.B ? S.B.items : []).map(i => [i.key, i]));
+  const toA = [], toB = [], miss = [];
+  for (const [key, p] of PATCH){
+    const ai = amap.get(key) || null, bi = bmap.get(key) || null;
+    const base = (ai || bi || {}).base || key;
+    let bytes = null, srcName = '';
+    if (p.custom){ bytes = p.custom.bytes; srcName = '本地图 ' + p.custom.name; }
+    else if (p.dir === 'toA'){
+      if (!bi){ miss.push(base + '（B 侧没有同名图）'); continue; }
+      bytes = itemBytes({ item: bi, bytes: S.B.bytes }); srcName = 'B 侧同名图';
+    } else {
+      if (!ai){ miss.push(base + '（A 侧没有同名图）'); continue; }
+      bytes = itemBytes({ item: ai, bytes: S.A.bytes }); srcName = 'A 侧同名图';
+    }
+    const tgt = (p.dir === 'toA') ? ai : bi;              // 目标侧那条资源（决定包内名字）
+    if (!tgt || tgt.idx < 0){ miss.push(base + '（' + (p.dir === 'toA' ? 'A' : 'B') + ' 侧缺失）'); continue; }
+    const rec = { key, base, idx: tgt.idx, bytes, srcName,
+                  custom: !!p.custom, customName: p.custom ? p.custom.name : '',
+                  toWhich: (p.dir === 'toA') ? 'A' : 'B',
+                  name: tgt.full,                            // 包内目标全名（不会被改）
+                  oldW: tgt.w, oldH: tgt.h, decl: tgt.decl };
+    if (p.dir === 'toA') toA.push(rec); else toB.push(rec);
+  }
+  return { toA, toB, miss };
+}
+/* ---- 尺寸体检：新图 vs 目标原图（+ 声明） ---- */
+function sizeIssues(plan){
+  const out = [];
+  for (const t of plan.toA.concat(plan.toB)){
+    const nw = pngWH(t.bytes);
+    t.newW = nw ? nw.w : null; t.newH = nw ? nw.h : null;
+    if (!nw){ t.lv = 'unknown'; continue; }
+    if (nw.w === t.oldW && nw.h === t.oldH){ t.lv = 'same'; continue; }
+    const d = t.decl;                                        // [高, 宽] 或 null
+    if (d){
+      if (Math.abs(d[1] - nw.w) < 0.51 && Math.abs(d[0] - nw.h) < 0.51) t.lv = 'declok';
+      else t.lv = 'stretch';                                 // 声明与新图不符 ⇒ 会被拉伸/压扁
+    } else t.lv = 'nodesc';                                  // 无声明 ⇒ 显示尺寸由布局决定
+    out.push(t);
+  }
+  return out;
+}
+const LV_TXT = {
+  stretch: ['★ 会被拉伸/压扁', '#c2410c'],
+  nodesc:  ['显示尺寸由布局决定', '#b45309'],
+  declok:  ['按声明尺寸显示', '#6b7280'],
+  unknown: ['读不出尺寸', '#6b7280']
+};
+/* ---- 尺寸不一致时的确认框（点「仍然继续」才继续出包）---- */
+function askSizeConfirm(plan, issues){
+  BUILD_PLAN = plan;
+  const body = document.getElementById('warnBody');
+  if (!body) return;
+  const nS = issues.filter(t => t.lv === 'stretch').length;
+  const nN = issues.filter(t => t.lv === 'nodesc').length;
+  const nD = issues.filter(t => t.lv === 'declok').length;
+  const row = t => {
+    const [txt, col] = LV_TXT[t.lv] || LV_TXT.unknown;
+    const src = t.custom ? ('📁 ' + esc(t.customName)) : esc(t.srcName);
+    return '<tr>' +
+      '<td style="padding:4px 8px 4px 0;font:11.5px Consolas,monospace;word-break:break-all">' + esc(t.base) + '</td>' +
+      '<td style="padding:4px 8px;white-space:nowrap;font:11.5px Consolas,monospace">' +
+        t.oldW + '×' + t.oldH + ' → <b>' + t.newW + '×' + t.newH + '</b></td>' +
+      '<td style="padding:4px 8px;white-space:nowrap;font-size:11.5px;color:' + col + ';font-weight:600">' + txt + '</td>' +
+      '<td style="padding:4px 0 4px 8px;font-size:11.5px;color:#6c7686;word-break:break-all">' + src + '</td>' +
+    '</tr>';
+  };
+  const list = issues.slice(0, 24).map(row).join('');
+  body.innerHTML =
+    '<h3>⚠ 有 ' + issues.length + ' 张图的尺寸跟目标不一致</h3>' +
+    '<div class="sub">' +
+      (nS ? '<b style="color:#c2410c">' + nS + ' 张会被拉伸/压扁</b>　' : '') +
+      (nN ? (nS ? '· ' : '') + nN + ' 张无声明（显示尺寸由布局决定）' : '') +
+      (nD ? ((nS || nN) ? '· ' : '') + nD + ' 张与声明尺寸吻合' : '') +
+      '　·　确认是否仍然替换？</div>' +
+    '<div style="max-height:320px;overflow:auto;border:1px solid var(--line);border-radius:8px;padding:6px 10px;background:#fbfcfe">' +
+      '<table style="border-collapse:collapse;width:100%"><tbody>' + list + '</tbody></table>' +
+      (issues.length > 24 ? '<div style="padding:6px 0;font-size:12px;color:#6c7686">…另有 ' + (issues.length - 24) + ' 张，省略</div>' : '') +
+    '</div>' +
+    '<div class="note" style="margin-top:10px">' +
+      '<b>文件名说明</b>：替换<b>按资源表位置</b>写入，包内名字永远是目标那条（第一列）—— 你选的本地图叫什么名字都无所谓，<b>不会被改名</b>。' +
+      (nS ? '<br><b style="color:#c2410c">★ 会被拉伸/压扁</b> = 目标有声明尺寸、且新图尺寸跟它对不上，引擎会按声明值缩放，形状会变。' : '') +
+      (nN ? '<br><b style="color:#b45309">无声明</b> = 显示尺寸由布局决定（此前实机验证过：这类图换不同尺寸也不会被压扁）。' : '') +
+    '</div>' +
+    '<div class="pbtns" style="margin-top:14px">' +
+      '<button class="pri" onclick="confirmSizeThenBuild()">仍然继续（' + plan.toA.length + ' 进 A / ' + plan.toB.length + ' 进 B）</button>' +
+      '<button onclick="closeWarn()">取消</button>' +
+    '</div>';
+  const d = document.getElementById('warnDlg');
+  if (d && d.showModal) d.showModal();
+  else askBuildTarget(plan);
+}
+function closeWarn(){ const d = document.getElementById('warnDlg'); if (d && d.close) d.close(); }
+function confirmSizeThenBuild(){
+  closeWarn();
+  if (BUILD_PLAN) askBuildTarget(BUILD_PLAN);
+}
+/* ---- 出包：先问「生成哪一个包」+「生成什么文件（app.sv / .kzb）」 ---- */
+function askBuildTarget(plan){
+  BUILD_PLAN = plan;
+  const body = document.getElementById('buildBody');
+  if (!body) return;
+  const { toA, toB, miss } = plan;
+  const fA = fontCount('A'), fB = fontCount('B');
+  const fx = n => n ? ' + ' + n + ' 个字体' : '';
+  const side = (id) => {
+    const to = (id === 'A') ? toA : toB;
+    const nf = (id === 'A') ? fA : fB;
+    const nd = declCount(id);
+    const s = S[id];
+    const has = !!(s && s.sv);                       // 有 app.sv 外壳？
+    const n = to.length, any = (n > 0 || nf > 0 || nd > 0);
+    const head = '<div style="margin:12px 0 5px;font-weight:600;font-size:13px">' +
+      id + ' 版底包：' + (s ? esc(s.file) : '<b style="color:#c2410c">未加载</b>') +
+      (s && s.kzbShort
+        ? '<div style="font-weight:400;color:#5b6b83;font-size:12px;margin-top:2px">当前 kzb：' +
+          esc(s.kzbShort) + (s.kzbs && s.kzbs.length > 1
+            ? '　（该包共 ' + s.kzbs.length + ' 个 kzb，可在卡片下拉里切换）' : '') + '</div>'
+        : '') +
+      '<div style="font-weight:400;color:#5b6b83">要替换 ' + n + ' 张图' + fx(nf) +
+      (nd ? ' + ' + nd + ' 处声明' : '') + '</div></div>';
+    const b1 = '<button' + (has && any ? ' class="pri"' : '') + (has && any ? '' : ' disabled') +
+      ' onclick="doBuild(\'' + id + '\',\'sv\')">生成 app.sv</button>';
+    const b2 = '<button' + ((!has && any) ? ' class="pri"' : '') + (any ? '' : ' disabled') +
+      ' onclick="doBuild(\'' + id + '\',\'kzb\')">导出 .kzb</button>';
+    let hint = '';
+    if (!s) hint = '<div class="note">这一槽还没加载包</div>';
+    else if (!has) hint = '<div class="note"><b style="color:#b45309">该槽加载的是纯 .kzb（没有 app.sv 外壳）⇒ 只能导出 .kzb</b></div>';
+    else if (nf) hint = '<div class="note">.kzb 里只含图片与声明改动 —— 字体替换只在 app.sv 里生效</div>';
+    else if (!any) hint = '<div class="note">这一槽没有要生成的内容（既没换图，也没改声明）</div>';
+    return head + '<div class="pbtns" style="margin:0 0 2px">' + b1 + b2 + '</div>' + hint;
+  };
+  body.innerHTML =
+    '<h3>生成 · 选包 + 选文件类型</h3>' +
+    '<div class="sub">替换清单：进 A ' + toA.length + ' 张 · 进 B ' + toB.length + ' 张' +
+      (miss.length ? ' · 跳过 ' + miss.length + ' 张' : '') + '</div>' +
+    side('A') + side('B') +
+    '<div class="note" style="margin-top:12px">' +
+      '<b>app.sv</b> = 完整刷机文件（换图后的 kzb + 原包外壳），下载后替换 <code>Release</code> 里那份，其余 5 个文件不动。' +
+      '<br><b>.kzb</b> = 资源包本体（只有换过图的 kzb），适合自己塞进别的包 / 交给小熊猫那边的工具。' +
+      '<br><b>包里不止一个 kzb 时</b>：出的是卡片下拉里<b>当前选中</b>的那个（导出名也跟着它走）。' +
+      (plan.issues && plan.issues.length
+        ? '<br><b style="color:#b45309">⚠ 其中 ' + plan.issues.length + ' 张尺寸与目标不一致（你已确认继续）</b>' : '') +
+      (miss.length ? '<br>跳过：' + esc(miss.slice(0, 6).join('；')) + (miss.length > 6 ? ' …' : '') : '') +
+    '</div>' +
+    '<div class="pfoot"><button onclick="closeBuild()">取消</button></div>';
+  const d = document.getElementById('buildDlg');
+  if (d && d.showModal) d.showModal();
+  else {                                             // 极端降级：没有 dialog 就按可用的那个直接出 app.sv
+    const Aok = S.A && S.A.sv && (toA.length || fA || declCount('A')), Bok = S.B && S.B.sv && (toB.length || fB || declCount('B'));
+    if (Aok) doBuild('A', 'sv'); else if (Bok) doBuild('B', 'sv');
+  }
+}
+function closeBuild(){ const d = document.getElementById('buildDlg'); if (d && d.close) d.close(); }
+async function makePackage(){
+  try {
+    if (!S.A && !S.B) throw new Error('先加载文件（A / B 槽至少一个）');
+    if (!PATCH.size && !fontPatchTotal() && !declTotal())
+      throw new Error('还没设置替换 —— 在卡片上点「◀ 替换进 A」或「替换进 B ▶」，或在大图里「换成本地图」；换字体请点右上角「🔤 字体」；改尺寸声明点顶部「📐 声明」。');
+    const plan = collectPatches();
+    if (!plan.toA.length && !plan.toB.length && !fontPatchTotal() && !declTotal())
+      throw new Error('没有可替换的项：' + (plan.miss.slice(0, 3).join('；') || '检查一下替换方向对应的那一侧是否有同名图'));
+    plan.issues = sizeIssues(plan);
+    if (plan.issues.length) askSizeConfirm(plan, plan.issues);   // 尺寸对不上 ⇒ 先确认
+    else askBuildTarget(plan);
+  } catch (e){ alertMsg('err', '出包失败：' + ((e && e.message) || e)); }
+}
+/* ---- 下载 & 命名工具 ---- */
+function downloadBytes(bytes, filename){
+  const url = URL.createObjectURL(new Blob([bytes], { type: 'application/octet-stream' }));
+  const a = document.createElement('a');
+  a.href = url; a.download = filename;
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  setTimeout(() => URL.revokeObjectURL(url), 20000);
+}
+function kzbNameOf(base){
+  /* ★ 多 kzb 支持后，导出名要跟【当前选中的那个 kzb】走，不再固定 bic_byd_stha.kzb */
+  if (base && base.kzbShort && /\.kzb$/i.test(base.kzbShort)) return base.kzbShort;
+  const f = String((base && base.file) || '');
+  const i = f.toLowerCase().lastIndexOf('.kzb');
+  if (i > 0){
+    const s = f.slice(0, i).split(/[\s>/\\]/).filter(Boolean).pop();
+    if (s) return s + '.kzb';
+  }
+  return 'bic_byd_stha.kzb';
+}
+/* ---- 真正出包：kind = 'sv'（完整 app.sv）| 'kzb'（只资源包本体） ----
+   ⚠️ 第二个参数别叫 fmt —— 会遮蔽全局的 fmt()（千分位格式化函数），
+      成功提示里一调用就报「fmt is not a function」（2026-10-11 踩到）。 */
+async function doBuild(target, kind){
+  kind = (kind === 'kzb') ? 'kzb' : 'sv';
+  const d = document.getElementById('buildDlg');
+  if (d && d.close) d.close();
+  const plan = BUILD_PLAN;
+  if (!plan) return;
+  const list = (target === 'A') ? plan.toA : plan.toB;
+  const base = S[target];
+  const fAll = (typeof FPATCH !== 'undefined' && FPATCH && FPATCH[target]) ? FPATCH[target] : new Map();
+  const nFont = (kind === 'sv') ? fAll.size : 0;             // 字体在 tar 里，.kzb 模式不涉及
+  const dmap = (typeof DPATCH !== 'undefined' && DPATCH && DPATCH[target]) ? DPATCH[target] : new Map();
+  const nDecl = dmap.size;                                  // 声明改动（等长覆盖，两种产物都带上）
+  try {
+    if (!list.length && !nFont && !nDecl) throw new Error('没有要替换进 ' + target + ' 包的内容');
+    if (!base) throw new Error(target + ' 槽没加载包');
+    if (kind === 'sv' && !base.sv) throw new Error(target + ' 槽加载的是纯 .kzb，没有 app.sv 外壳 ⇒ 只能导出 .kzb（若想出 app.sv，请改选 app.sv 或整包 zip）');
+    await new Promise(r => setTimeout(r, 60));
+    /* ★ 声明改动：在重建【之前】写进底包副本（等长 4 字节覆盖 ⇒ 任何偏移都不变）；
+       重建对未替换条目是「整段原样搬运」⇒ 改动必然跟着进新包。 */
+    const srcBytes = nDecl ? declApplyBytes(base.bytes, dmap) : base.bytes;
+    const targets = new Map(list.map(t => [t.idx, t.bytes]));
+    const rb = rebuildKzb(latin1(base.bytes), srcBytes, targets);
+    alertMsg('info', '出包中（替换后的 ' + target + ' → ' + (kind === 'sv' ? 'app.sv' : '.kzb') + '）：替换 ' + list.length + ' 张图' +
+      (nFont ? ' + ' + nFont + ' 个字体' : '') +
+      (nDecl ? ' + ' + nDecl + ' 处声明' : '') +
+      (rb.badIdx.length ? '；⚠ 该包资源表含 ' + rb.badIdx.length + ' 个乱序条目，已按物理序重建' : '') +
+      (kind === 'sv' ? ' → tar 手术 → 重新压缩（大包约 10~30 秒）…' : ' → 自检 → 写盘…'));
+
+    const errs = [];
+    /* ---- 自检 ⓪：声明改动确实按预期写进了底包副本 ---- */
+    if (nDecl){
+      const dv = new DataView(srcBytes.buffer, srcBytes.byteOffset, srcBytes.byteLength);
+      let dok = 0;
+      for (const ov of dmap.values()){
+        const hs = (ov.h == null) || Math.abs(dv.getFloat32(ov.hOff, true) - ov.h) < 1e-4;
+        const ws = (ov.w == null) || Math.abs(dv.getFloat32(ov.wOff, true) - ov.w) < 1e-4;
+        if (hs && ws) dok++;
+      }
+      if (dok !== nDecl) errs.push('声明改动写入核对 ' + dok + '/' + nDecl);
+    }
+    /* ---- 自检 ①：资源表结构（乱序包换图最容易坏在这里，坏 = 刷进去黑屏） ---- */
+    {
+      const T2 = rb.TBL, N2 = kzbCount(rb.kzb, T2, null);   // 头没动过 ⇒ 头读法必成功
+      const o2 = [], l2 = [];
+      for (let k = 0; k < N2; k++){ o2.push(u32(rb.kzb, T2 + k * 24 + 8)); l2.push(u32(rb.kzb, T2 + k * 24 + 12)); }
+      let ovf = 0;
+      for (let k = 0; k < N2; k++) if (o2[k] + l2[k] > rb.kzb.length || o2[k] < 0) ovf++;
+      if (ovf) errs.push('资源表越界 ' + ovf + ' 条');
+      const ord = Array.from({ length: N2 }, (_, i) => i).sort((a, b) => o2[a] - o2[b]);
+      let dis = 0;
+      for (let t = 1; t < N2; t++) if (o2[ord[t]] < o2[ord[t - 1]] + l2[ord[t - 1]]) dis++;
+      if (dis) errs.push('资源表物理序重叠 ' + dis + ' 处');
+      /* 乱序条目必须原样保留 —— 旧版黑屏正是它们 off 没前移而越界丢数据。
+         ★ 例外（2026-10-11 修）：本次【被替换的目标】本来就会变，必须排除，
+           否则会误报「乱序条目 idx N 数据受损」——
+           例：小熊猫 10-11 包里 ADSA_Small_bg_0/1 正好是 idx 572/573，
+           其中 572 就是乱序条目。 */
+      for (const k of rb.badIdx){
+        if (targets.has(k)) continue;
+        const no = rb.newOff[k], nl = rb.newLen[k];
+        const oo = u32(base.bytes, T2 + k * 24 + 8);
+        let same = (nl === u32(base.bytes, T2 + k * 24 + 12));
+        for (let i = 0; same && i < nl; i++) if (rb.kzb[no + i] !== base.bytes[oo + i]) same = false;
+        if (!same) errs.push('乱序条目 idx ' + k + ' 数据受损');
+      }
+    }
+    /* ---- 自检 ②：重建后逐张核对被替换的图 ---- */
+    let rebuilt = 0, okN = 0;
+    try {
+      const chk = await parseKzb(rb.kzb, () => {});
+      rebuilt = chk.items.length;
+      if (chk.items.length !== base.items.length) errs.push('重建后 PNG 数量变化（' + chk.items.length + '）');
+      const byIdx = new Map();
+      for (const it of chk.items) if (it.idx >= 0) byIdx.set(it.idx, it);
+      for (const t of list){
+        const ci = byIdx.get(t.idx);
+        if (!ci){ errs.push('重建后丢失 idx ' + t.idx); continue; }
+        if (ci.size !== t.bytes.length){ errs.push('长度不符 ' + t.base); continue; }
+        const got = rb.kzb.subarray(ci.pngOff, ci.pngOff + ci.size);
+        let same = true;
+        for (let i = 0; i < t.bytes.length; i++) if (t.bytes[i] !== got[i]) { same = false; break; }
+        if (same) okN++; else errs.push('内容不符 ' + t.base);
+      }
+    } catch (e){ errs.push('重解析失败：' + e.message); }
+
+    /* ================= 模式一：只导出 .kzb ================= */
+    if (kind === 'kzb'){
+      if (errs.length) throw new Error('自检未通过 → 不出包：' + errs.slice(0, 3).join('；'));
+      const kn = kzbNameOf(base);
+      downloadBytes(rb.kzb, kn);
+      alertMsg('ok', '✓ 已导出 ' + kn + '（替换后的 ' + target + '）：替换 ' + list.length + ' 张图' +
+        (nDecl ? ' + ' + nDecl + ' 处声明' : '') + '，kzb ' +
+        fmt(base.bytes.length) + ' → ' + fmt(rb.kzb.length) + ' B (Δ ' + (rb.delta >= 0 ? '+' : '') + fmt(Math.abs(rb.delta)) + ')' +
+        '｜自检：重建后 ' + rebuilt + ' 张、逐字节核对 ' + okN + '/' + list.length +
+        (nDecl ? '、声明 ' + nDecl + ' 处已写入' : '') +
+        (rb.badIdx.length ? '｜乱序条目 ' + rb.badIdx.length + ' 个已按物理序重建 ✓' : '') +
+        '　—— 直接拿这个 .kzb 用即可（注意：字体替换不写进 .kzb；声明改动已写进 .kzb）');
+      return;
+    }
+
+    /* ================= 模式二：完整 app.sv ================= */
+    /* tar 补丁 = 新 kzb + 该槽的字体条目 */
+    const tarPatches = new Map();
+    tarPatches.set(base.sv.pos, rb.kzb);
+    for (const [pos, f] of fAll) tarPatches.set(pos, f.bytes);
+    const ts = tarRebuild(base.sv.tar, tarPatches);
+    const sv = await buildSvBytes(ts.tar, base.sv.meta);
+    /* ---- 自检 ③：gzip 头 / 脚注 ---- */
+    if (!(sv[0] === 0x1f && sv[1] === 0x8b)) errs.push('gzip 头不对');
+    const gzLen = sv.length - 512, foot = sv.subarray(gzLen);
+    let fh = ''; for (let i = 0; i < 32; i++) fh += String.fromCharCode(foot[0x120 + i]);
+    if (fh !== md5hex(sv.subarray(0, gzLen))) errs.push('脚注 MD5 不符');
+    if ((u32(foot, 0x140) >>> 0) !== ts.tar.length) errs.push('脚注解压大小不符');
+    /* ---- 自检 ④：字体条目从新 tar 里取回、逐字节比对 ---- */
+    let fOk = 0;
+    for (const [, f] of fAll){
+      const got = tarEntryBytes(ts.tar, f.name);
+      if (!got || got.length !== f.bytes.length){ errs.push('字体条目大小不符 ' + f.short); continue; }
+      let same = true;
+      for (let i = 0; i < f.bytes.length; i++) if (got[i] !== f.bytes[i]) { same = false; break; }
+      if (same) fOk++; else errs.push('字体内容不符 ' + f.short);
+    }
+    if (errs.length) throw new Error('自检未通过 → 不出包：' + errs.slice(0, 3).join('；'));
+    downloadBytes(sv, 'app.sv');
+    alertMsg('ok', '✓ 出包成功（【替换后的 ' + target + '】）：替换 ' + list.length + ' 张图' +
+      (nFont ? ' + ' + nFont + ' 个字体' : '') +
+      (nDecl ? ' + ' + nDecl + ' 处声明' : '') + '，app.sv ' + fmt(sv.length) +
+      ' B（已开始下载）｜自检：重建后 ' + rebuilt + ' 张、逐字节核对 ' + okN + '/' + list.length +
+      (nFont ? '、字体 ' + fOk + '/' + nFont : '') +
+      '，kzb ' + fmt(base.bytes.length) + ' → ' + fmt(rb.kzb.length) + ' B (Δ ' +
+      (rb.delta >= 0 ? '+' : '') + fmt(Math.abs(rb.delta)) + ')' +
+      (rb.badIdx.length ? '｜乱序条目 ' + rb.badIdx.length + ' 个已按物理序重建 ✓' : '') +
+      '　—— 拿它替换 ' + target + ' 槽那份底包的 app.sv 即可');
+  } catch (e){
+    alertMsg('err', '出包失败：' + ((e && e.message) || e));
+  }
+}
+/* ===================== 载入流程 ===================== */
+const S = { A: null, B: null };
+function setStatus(id, html){ const e = document.querySelector('#slot' + id + ' .st'); if (e) e.innerHTML = html; }
+function setName(id, txt){ const e = document.querySelector('#slot' + id + ' .n'); if (e) e.textContent = txt; }
+
+async function load(which, file){
+  const slot = document.querySelector('#slot' + which);
+  slot.classList.add('has');
+  setName(which, file.name + '  (' + fmt(file.size) + ' B)');
+  setStatus(which, '读取中…');
+  alertMsg('info', '【' + which + '】正在读取 ' + file.name + '（' + fmt(file.size) + ' B）…');
+  pushLog(which, '选取文件 ' + file.name + '（' + fmt(file.size) + ' B）');
+  const logs = [];
+  const log = m => {
+    logs.push(m);
+    setStatus(which, logs.slice(-4).join('<br>'));
+    pushLog(which, m);
+    alertMsg('info', '【' + which + '】' + m);
+  };
+  try {
+    const buf = new Uint8Array(await file.arrayBuffer());
+    log('已读入内存 ' + fmt(buf.length) + ' B');
+    const res = await toKzb(buf, log);
+    /* ★★ 一个 app.sv 里可能有多个 kzb（主资源包 + template.kzb / 3dscreen.kzb…）。
+       统一成 kzbs 列表，当前看的是第 ki 个；切换时懒解析（12MB 的包不必一上来全解）。 */
+    const kzbs = (res.kzbs && res.kzbs.length)
+      ? res.kzbs
+      : [{ name: res.name || file.name, short: String(res.name || file.name).split('/').pop(),
+           size: res.data.length, data: res.data, sv: res.sv || null, parsed: null }];
+    let ki = (res.kzbs && res.kzbs.length) ? Math.max(0, res.kzbs.indexOf(res)) : 0;
+    if (res.mainIdx != null && res.mainIdx >= 0) ki = res.mainIdx;   // 默认选主资源包
+    const z = kzbs[ki];
+    if (!z.parsed) z.parsed = await parseKzb(z.data, log);
+    const k = z.parsed;
+    /* ★ 用 Object.assign 整体继承 parseKzb 的返回 —— 别再逐字段手抄了：
+       已经漏过两次（declsAll、nameless），以后 parseKzb 加字段会自动带上。 */
+    S[which] = Object.assign({}, k, {
+      file: file.name + (res.name && res.name !== file.name ? ' \u2192 ' + res.name : ''),
+      sv: z.sv || null, kzbs, ki, mainIdx: (res.mainIdx != null ? res.mainIdx : 0),
+      kzbName: z.name, kzbShort: z.short
+    });
+    setStatus(which, '✓ ' + k.items.length + ' 张 PNG' +
+      (kzbs.length > 1 ? '　<span style="color:#b45309">（共 ' + kzbs.length + ' 个 kzb，可切换）</span>' : ''));
+    updateKsel(which);
+    if (kzbs.length > 1)
+      log('ℹ 这个 app.sv 里有 ' + kzbs.length + ' 个 kzb：' +
+          kzbs.map(x => x.short + '（' + fmt(x.size) + ' B）').join('、') +
+          ' —— 当前看的是 ' + z.short + '；想换另一个，用卡片里的下拉框切换。');
+    pushLog(which, '完成：' + k.items.length + ' 张 PNG' + (kzbs.length > 1 ? '（' + z.short + '）' : ''));
+    alertMsg('ok', '【' + which + '】解析完成，共 ' + k.items.length + ' 张 PNG。' +
+      (kzbs.length > 1 ? '该包共 ' + kzbs.length + ' 个 kzb，可用卡片里的下拉框切换。' : '') +
+      (S.A && S.B ? '两个文件都好了，看下面的列表 →'
+                  : '单包模式：已列出全部图片，可直接搜索/筛选；再选第二个文件就能对比差异。'));
+  } catch (e){
+    const msg = (e && e.message) ? e.message : String(e);
+    setStatus(which, '<span style="color:#dc2626">✗ ' + msg + '</span>');
+    pushLog(which, '失败：' + msg);
+    alertMsg('err', '【' + which + '】解析失败：' + msg + '　（可换个文件再试；若反复失败，把这句话发我）');
+    S[which] = null;
+    updateKsel(which);
+  }
+  render();
+}
+
+/* ===================== ★★ 槽内多 kzb 选择（2026-10-13） =====================
+   一个 app.sv 里往往不止一个 kzb：主资源包 bic_byd_stha.kzb + custom-theme/template.kzb
+   + 3dscreen.kzb（其他作者的包就是这样）。以前只认主包、别的只能提示；
+   现在都列进槽里的下拉框，切哪个看哪个、也能出包。
+   切换时机注意：PATCH 是按「图名 key」记的，换了 kzb 后同一个名字可能指不同的图
+   ⇒ 涉及该槽的替换与声明改动必须先清掉（本地图那种只跟目标侧有关的可留）。 */
+function updateKsel(which){
+  const el = document.querySelector('#slot' + which + ' .ksel');
+  if (!el) return;
+  const s = S[which];
+  if (!s || !s.kzbs || s.kzbs.length < 2){ el.className = 'ksel'; el.innerHTML = ''; return; }
+  el.className = 'ksel on';
+  const opts = s.kzbs.map((z, i) =>
+    '<option value="' + i + '"' + (i === s.ki ? ' selected' : '') + '>' +
+      esc(z.short) + '（' + fmt(z.size) + ' B' + (z.parsed ? '，' + z.parsed.items.length + ' 张' : '') + '）' +
+      (i === s.mainIdx ? ' ★主资源包' : '') + '</option>').join('');
+  el.innerHTML =
+    '<div class="kh">这个 app.sv 里共 <b>' + s.kzbs.length + '</b> 个 kzb，切换查看 / 修改：</div>' +
+    '<select onchange="switchKzb(\'' + which + '\', this.value)"' +
+      ' onmousedown="event.stopPropagation()" onclick="event.stopPropagation()">' + opts + '</select>' +
+    '<div class="knote">⚠ 切换会清掉这一槽已设的替换 / 声明改动（图名含义随包变化）</div>';
+}
+async function switchKzb(which, i){
+  const s = S[which];
+  if (!s || !s.kzbs) return;
+  i = parseInt(i, 10);
+  if (!(i >= 0 && i < s.kzbs.length) || i === s.ki) return;
+  const z = s.kzbs[i];
+  /* 清掉「会因换包而失效」的替换指令：非本地图的替换（源取自另一侧）一律清；
+     本地图的只在目标侧匹配，所以只清目标侧是这个槽的。 */
+  let cleared = 0;
+  for (const [key, p] of [...PATCH]){
+    const tgt = (p.dir === 'toA') ? 'A' : 'B';
+    if (tgt === which || !p.custom){ PATCH.delete(key); cleared++; }
+  }
+  let dcleared = 0;
+  try { if (typeof DPATCH !== 'undefined' && DPATCH[which]){ dcleared = DPATCH[which].size; DPATCH[which].clear(); } } catch (e){}
+  try { SELECT.clear(); } catch (e){}
+  alertMsg('info', '【' + which + '】切换到 ' + z.short + '…（大包首次解析要几秒）');
+  try {
+    if (!z.parsed) z.parsed = await parseKzb(z.data, () => {});
+    Object.assign(s, z.parsed, { sv: z.sv || null, ki: i, kzbName: z.name, kzbShort: z.short });
+  } catch (e){
+    alertMsg('err', '【' + which + '】切换失败：' + ((e && e.message) || e));
+    updateKsel(which);
+    return;
+  }
+  setStatus(which, '✓ ' + s.items.length + ' 张 PNG　<span style="color:#b45309">（共 ' + s.kzbs.length + ' 个 kzb，可切换）</span>');
+  pushLog(which, '切换到 ' + z.short + '：' + s.items.length + ' 张 PNG' +
+    (cleared ? '，清除替换 ' + cleared + ' 项' : '') + (dcleared ? '，清除声明 ' + dcleared + ' 处' : ''));
+  updateKsel(which);
+  syncPatchUI();
+  render();
+  alertMsg('ok', '【' + which + '】已切到 ' + z.short + '：' + s.items.length + ' 张 PNG' +
+    (cleared ? '。该槽相关替换 ' + cleared + ' 项已清除（图名含义随包变了）' : '') +
+    (dcleared ? '；声明改动 ' + dcleared + ' 处已清除（字节偏移随包变了）' : '') + '。');
+}
+
+/* ===================== 对比 ===================== */
+function uniqCats(items){ return [...new Set(items.map(i => i.cat))].sort(); }
+function buildRows(){
+  if (!S.A && !S.B) return null;
+  if (!S.A || !S.B){                       // 单包模式：只列出这一个包里的全部图片
+    const which = S.A ? 'A' : 'B';
+    const one = S[which];
+    return one.items.map(i => ({
+      key: i.key, base: i.base, cat: i.cat,
+      a: which === 'A' ? i : null,
+      b: which === 'B' ? i : null,
+      st: 'solo'
+    }));
+  }
+  const A = new Map(S.A.items.map(i => [i.key, i]));
+  const B = new Map(S.B.items.map(i => [i.key, i]));
+  const keys = [...new Set([...A.keys(), ...B.keys()])].sort();
+  const rows = [];
+  for (const k of keys){
+    const a = A.get(k), b = B.get(k);
+    let st;
+    if (a && !b) st = 'onlyA';
+    else if (!a && b) st = 'onlyB';
+    else if (a.size !== b.size) st = 'diff';
+    else {
+      let same = true;
+      const ba = S.A.bytes, bb = S.B.bytes;
+      for (let i = 0; i < a.size; i++) if (ba[a.pngOff + i] !== bb[b.pngOff + i]) { same = false; break; }
+      st = same ? 'same' : 'diff';
+    }
+    rows.push({ key: k, base: (a || b).base, cat: (a || b).cat, a, b, st });
+  }
+  return rows;
+}
+const ST_TXT = { same: '一致', diff: '内容不同', onlyA: '仅 A 有', onlyB: '仅 B 有', solo: '已载入' };
+const ST_CLS = { same: 'b-same', diff: 'b-diff', onlyA: 'b-onlyA', onlyB: 'b-onlyB', solo: 'b-solo' };
+
+/* 模糊匹配打分：直接子串(3) > 忽略分隔符后子串(2) > 字符子序列(1) > 不匹配(0) */
+const NORM_RE = /[\s_\-\.\(\)（）\[\]【】,，、]+/g;
+function normName(x){ return String(x).toLowerCase().replace(NORM_RE, ''); }
+function fuzzyScore(text, q){
+  if (!q) return 1;
+  const t = String(text).toLowerCase(), s = q.toLowerCase().trim();
+  if (!s) return 1;
+  if (t.includes(s)) return 3;
+  const tn = normName(t), sn = normName(s);
+  if (sn && tn.includes(sn)) return 2;
+  let i = 0;
+  for (let k = 0; k < tn.length && i < sn.length; k++) if (tn[k] === sn[i]) i++;
+  return i >= sn.length ? 1 : 0;
+}
+
+let ROWS = null;
+function render(){
+  const bar = document.getElementById('bar');
+  const grid = document.getElementById('grid');
+  renderOps();
+  if (!S.A && !S.B){ bar.innerHTML = '<span class="chip">等待选择文件…</span>'; return; }
+  const solo = (!S.A || !S.B);
+  ROWS = buildRows();
+  const cnt = { same: 0, diff: 0, onlyA: 0, onlyB: 0, solo: 0 };
+  ROWS.forEach(r => cnt[r.st]++);
+  let chips;
+  if (solo){
+    const which = S.A ? 'A' : 'B';
+    chips = '<span class="chip k">' + which + '：' + S[which].items.length + ' 张 PNG</span>' +
+            '<span class="chip b">单包模式 · 再选一个文件即可对比差异</span>';
+  } else {
+    chips = '<span class="chip k">A：' + S.A.items.length + ' 张</span>' +
+            '<span class="chip k">B：' + S.B.items.length + ' 张</span>' +
+            '<span class="chip g">一致 ' + cnt.same + '</span>' +
+            '<span class="chip a">内容不同 ' + cnt.diff + '</span>' +
+            '<span class="chip r">仅 A ' + cnt.onlyA + '</span>' +
+            '<span class="chip b">仅 B ' + cnt.onlyB + '</span>';
+  }
+  bar.innerHTML = chips +
+    '<select id="fCat"><option value="">全部分类</option>' +
+      uniqCats(ROWS).map(c => '<option>' + c + '</option>').join('') + '</select>' +
+    '<select id="fSt"><option value="">全部状态</option><option value="x">只看有差异（不同/仅单边）</option>' +
+      '<option value="diff">只看内容不同</option><option value="onlyA">只看仅 A 有</option><option value="onlyB">只看仅 B 有</option>' +
+      '<option value="declx">只看「声明≠实际」（会被拉伸）</option>' +
+      '<option value="declnone">只看「无声明」</option></select>' +
+    '<input type="text" id="fQ" placeholder="搜文件名（模糊匹配）…" style="width:178px">' +
+    '<span class="lblx" id="hitN"></span>' +
+    '<button onclick="exportCsv()">导出 CSV</button>' +
+    '<button onclick="copyKeys()">复制差异清单</button>' +
+    '<span class="lblx">预览底色</span>' +
+    '<button class="seg" data-bg="t" title="透明棋盘格（原始观感）">棋盘</button>' +
+    '<button class="seg" data-bg="w" title="白色背景（浅色模式）">白</button>' +
+    '<button class="seg" data-bg="d" title="深色背景（夜间模式）">深</button>' +
+    '<label class="ckx" title="按引擎的预乘 alpha 混合合成，还原实机显示效果（深色底尤其有用）"><input type="checkbox" id="fPre"' + (PRE ? ' checked' : '') + '>引擎预乘</label>' +
+    '<span class="sp"></span>' +
+    '<span class="chip k" id="selCount">已选 0 项</span>' +
+    '<button id="btnSelAll">全选当前列表</button>' +
+    '<button id="btnSelNone">清空</button>' +
+    '<button id="btnSel" class="pri" disabled>提取选中（0）</button>' +
+    '<button id="btnDiff">提取有差异的</button>';
+  document.getElementById('fCat').onchange = draw;
+  document.getElementById('fSt').onchange = draw;
+  document.getElementById('fQ').oninput = draw;
+  document.querySelectorAll('.seg').forEach(b => {
+    b.onclick = () => setBg(b.getAttribute('data-bg'));
+  });
+  const fpre = document.getElementById('fPre');
+  if (fpre) fpre.onchange = () => { PRE = !!fpre.checked; draw(); };
+  applyBg();
+  const g = id => document.getElementById(id);
+  const bAll = g('btnSelAll'), bNone = g('btnSelNone'), bSel = g('btnSel'), bDiff = g('btnDiff');
+  if (bAll) bAll.onclick = () => { (VISIBLE || []).forEach(r => SELECT.add(r.key)); redrawSel(); };
+  if (bNone) bNone.onclick = () => { SELECT.clear(); redrawSel(); };
+  if (bSel) bSel.onclick = () => askExportMode(ROWS.filter(r => SELECT.has(r.key)), '提取选中的资源');
+  if (bDiff) bDiff.onclick = () => {
+    const rows = (VISIBLE || []).filter(r => r.st !== 'same');
+    if (!rows.length){ alertMsg('warn', '当前筛选结果里没有差异资源。'); return; }
+    rows.forEach(r => SELECT.add(r.key));
+    redrawSel();
+    askExportMode(rows, '提取有差异的资源');
+  };
+  draw();
+}
+/* ===================== 预览底色 / 引擎预乘合成 ===================== */
+let BG = 't';                                    // t=棋盘(透明) w=白 d=深
+let PRE = false;                                 // 是否按引擎的预乘 alpha 混合合成
+const BG_RGB = { t: null, w: [255, 255, 255], d: [20, 20, 20] };
+let PRE_JOBS = [], PRE_SEQ = 0, VIEWER_R = null;
+
+function setBg(v){ BG = v; applyBg(); draw(); }
+function applyBg(){
+  try{
+    document.body.classList.toggle('bgw', BG === 'w');
+    document.body.classList.toggle('bgd', BG === 'd');
+    document.querySelectorAll('.seg').forEach(b =>
+      b.classList.toggle('on', b.getAttribute('data-bg') === BG));
+  } catch (e){ /* 测试环境可能没有 body/querySelectorAll */ }
+}
+function preOn(){ return PRE && !!BG_RGB[BG] && typeof createImageBitmap === 'function'; }
+
+function pngBlob(i, bytes){
+  return new Blob([bytes.subarray(i.pngOff, i.pngOff + i.size)], { type: 'image/png' });
+}
+
+/* 按引擎的「预乘 alpha」混合合成到当前底色： out = rgb + 底 × (1 - a/255)
+   注意：浏览器 <img> 走的是「直通」混合，跟引擎不一致 ——
+   想看实机（尤其夜间深色底）真实效果，必须自己合成。 */
+async function premulCanvas(i, bytes, tw, th, override){
+  const bg = BG_RGB[BG];
+  if (!bg || typeof createImageBitmap !== 'function') return null;
+  /* override = 完整的 PNG 字节（用于「替换后预览」）；不给就走包内字节 */
+  const bmp = await createImageBitmap(override ? new Blob([override], { type: 'image/png' }) : pngBlob(i, bytes));
+  const sc = Math.min(tw / bmp.width, th / bmp.height, 1);
+  const w = Math.max(1, Math.round(bmp.width * sc));
+  const h = Math.max(1, Math.round(bmp.height * sc));
+  const c = document.createElement('canvas');
+  c.width = w; c.height = h;
+  const ctx = c.getContext('2d', { willReadFrequently: true });
+  ctx.drawImage(bmp, 0, 0, w, h);
+  if (bmp.close) bmp.close();
+  const id = ctx.getImageData(0, 0, w, h);
+  const d = id.data;
+  for (let k = 0; k < d.length; k += 4){
+    const f = (255 - d[k + 3]) / 255;
+    d[k]     = Math.min(255, d[k]     + bg[0] * f + .5);
+    d[k + 1] = Math.min(255, d[k + 1] + bg[1] * f + .5);
+    d[k + 2] = Math.min(255, d[k + 2] + bg[2] * f + .5);
+    d[k + 3] = 255;
+  }
+  ctx.putImageData(id, 0, 0);
+  return c;
+}
+
+async function runPremul(){
+  const seq = ++PRE_SEQ;
+  const jobs = PRE_JOBS;
+  for (let k = 0; k < jobs.length; k++){
+    if (seq !== PRE_SEQ) return;                 // 已重绘，作废
+    if (k % 8 === 7) await new Promise(r => setTimeout(r, 0));
+    const box = jobs[k][0], item = jobs[k][1], bytes = jobs[k][2], ov = jobs[k][3];
+    if (!box || !box.isConnected || !box.querySelector) continue;
+    try{
+      const c = await premulCanvas(item, bytes, 190, 116, ov);
+      if (c && box.isConnected && seq === PRE_SEQ){
+        const im = box.querySelector('img');
+        if (im && im.parentNode === box) box.replaceChild(c, im);
+      }
+    } catch (e){ /* 单张失败保持原样 */ }
+  }
+}
+
+async function premulViewer(){
+  const seq = ++PRE_SEQ;
+  const r = VIEWER_R;
+  if (!r) return;
+  const bs = document.querySelectorAll('#dlgBody .pane .box');
+  for (let k = 0; k < bs.length; k++){
+    const box = bs[k];
+    const side = box.getAttribute ? box.getAttribute('data-side') : null;
+    const item = side === 'a' ? r.a : side === 'b' ? r.b : null;
+    const bytes = side === 'a' ? (S.A && S.A.bytes) : (S.B && S.B.bytes);
+    if (!item || !bytes || !box.querySelector) continue;
+    try{
+      const c = await premulCanvas(item, bytes, 480, 290, viewBytes(side, r.key, item, bytes).bytes);
+      if (c && seq === PRE_SEQ && box.isConnected){
+        const im = box.querySelector('img');
+        if (im && im.parentNode === box) box.replaceChild(c, im);
+      }
+    } catch (e){}
+  }
+}
+
+/* 声明尺寸辅助判断 */
+const declBad = i => !!(i && i.decl && (Math.abs(i.decl[0] - i.h) > 0.01 || Math.abs(i.decl[1] - i.w) > 0.01));
+const declNone = i => !!(i && !i.decl);
+function draw(){
+  const grid = document.getElementById('grid');
+  const c = document.getElementById('fCat').value;
+  const st = document.getElementById('fSt').value;
+  const q = document.getElementById('fQ').value.trim();
+  let rows = ROWS.filter(r =>
+    (!c || r.cat === c) &&
+    (!st || (
+      st === 'x' ? (r.st !== 'same' && r.st !== 'solo')
+      : st === 'declx' ? (declBad(r.a) || declBad(r.b))
+      : st === 'declnone' ? (declNone(r.a) || declNone(r.b))
+      : r.st === st)));
+  if (q){
+    rows = rows.map(r => ({ r, sc: Math.max(fuzzyScore(r.base, q), fuzzyScore(r.key, q) - 1) }))
+               .filter(x => x.sc > 0)
+               .sort((p, n2) => (n2.sc - p.sc) || p.r.base.localeCompare(n2.r.base))
+               .map(x => x.r);
+  }
+  VISIBLE = rows;
+  const hn = document.getElementById('hitN');
+  if (hn) hn.textContent = q ? ('命中 ' + rows.length + ' 个') : '';
+  if (!rows.length){
+    grid.innerHTML = '<div class="hint">' + (q
+      ? '没有匹配 「' + esc(q) + '」 的资源。可以试试更短的词，或只敲几个字母（支持模糊匹配：忽略下划线/横线/大小写，也能按字母顺序匹配）。'
+      : '没有符合筛选条件的资源。') + '</div>';
+    return;
+  }
+  const frag = document.createDocumentFragment();
+  CARDS_BY_KEY = new Map();
+  PRE_JOBS = [];
+  const wantPre = preOn();
+  const urlOf = (side, key, i, bytes) => (i ? viewUrl(side, key, i, bytes).url : null);
+  const cell = (u, i, label, cls, empty) =>
+    '<div class="th' + cls + (i ? '' : ' none') + '">' +
+      (i ? '<img loading="lazy" alt="' + label + '" src="' + u + '"><span class="tag">' + label + '</span>' : empty) +
+    '</div>';
+  const dim = i => i ? (i.w + '×' + i.h) : '—';
+  const sz = i => i ? fmt(i.size) + ' B' : '—';
+  const fn = v => (Math.abs(v - Math.round(v)) < 0.01 ? String(Math.round(v)) : String(Math.round(v * 100) / 100));
+  const dimD = i => {
+    if (!i) return '';
+    if (!i.decl) return '<span class="dcl none">无声明</span>';
+    const h = i.decl[0], w = i.decl[1];
+    const same = Math.abs(h - i.h) < 0.01 && Math.abs(w - i.w) < 0.01;
+    return '<span class="dcl' + (same ? '' : ' warn') + '">声明' + fn(w) + '×' + fn(h) +
+           (i.declMulti ? '·多值' : '') + (same ? '' : '★') + '</span>';
+  };
+  for (const r of rows){
+    const el = document.createElement('div');
+    const sel = SELECT.has(r.key);
+    el.className = 'card s-' + r.st + (sel ? ' sel' : '');
+    const ua = r.a ? urlOf('a', r.key, r.a, S.A.bytes) : null;
+    const ub = r.b ? urlOf('b', r.key, r.b, S.B.bytes) : null;
+    const pc = PATCH.get(r.key);
+    const cu = pc && pc.custom;
+    el.innerHTML =
+      '<div class="hd">' +
+        '<input type="checkbox"' + (sel ? ' checked' : '') + ' aria-label="选择">' +
+        '<span class="fn">' + esc(r.base) + '</span>' +
+        '<span class="badge ' + ST_CLS[r.st] + '">' + ST_TXT[r.st] + '</span>' +
+      '</div>' +
+      '<div class="thumbs">' +
+        cell(ua, r.a, 'A', '', '仅 B 有') +
+        cell(ub, r.b, 'B', ' tb', '仅 A 有') +
+      '</div>' +
+      '<div class="patch">' +
+        '<button class="pA" data-d="toA"' + (r.a ? '' : ' disabled="disabled"') +
+          ' title="用 B 侧的同名图（或你自己选的本地图）替换进 A 包的这张">◀ 替换进 A</button>' +
+        '<button class="pB" data-d="toB"' + (r.b ? '' : ' disabled="disabled"') +
+          ' title="用 A 侧的同名图（或你自己选的本地图）替换进 B 包的这张">替换进 B ▶</button>' +
+      '</div>' +
+      '<div class="meta">' +
+        '<div class="cat">' + esc(r.cat) + '</div>' +
+        '<div class="row"><span class="lbl">A</span><span>' + dim(r.a) + ' · ' + sz(r.a) + dimD(r.a) + '</span></div>' +
+        '<div class="row"><span class="lbl">B</span><span>' + dim(r.b) + ' · ' + sz(r.b) + dimD(r.b) + '</span></div>' +
+      '</div>';
+    const ck = el.querySelector ? el.querySelector('input') : null;
+    if (ck){
+      ck.onclick = e => {
+        if (e && e.stopPropagation) e.stopPropagation();
+        toggleSel(r.key, !!ck.checked);
+        el.classList[ck.checked ? 'add' : 'remove']('sel');
+      };
+    }
+    const pA = el.querySelector ? el.querySelector('.pA') : null;
+    const pB = el.querySelector ? el.querySelector('.pB') : null;
+    if (pA) pA.onclick = e => { if (e && e.stopPropagation) e.stopPropagation(); patchToggle(r.key, 'toA'); };
+    if (pB) pB.onclick = e => { if (e && e.stopPropagation) e.stopPropagation(); patchToggle(r.key, 'toB'); };
+    el.onclick = () => openViewer(r);
+    if (wantPre && el.querySelectorAll){
+      const ths = el.querySelectorAll('.th');
+      if (r.a && ths[0] && S.A) PRE_JOBS.push([ths[0], r.a, S.A.bytes, viewBytes('a', r.key, r.a, S.A.bytes).bytes]);
+      if (r.b && ths[1] && S.B) PRE_JOBS.push([ths[1], r.b, S.B.bytes, viewBytes('b', r.key, r.b, S.B.bytes).bytes]);
+    }
+    CARDS_BY_KEY.set(r.key, { el, ck, pA, pB });
+    refreshCardPatch(r.key);
+    frag.appendChild(el);
+  }
+  updateSelUI();
+  grid.innerHTML = '';
+  grid.appendChild(frag);
+  renderOps();
+  if (PRE_JOBS.length) runPremul();
+}
+function esc(s){ return String(s).replace(/[&<>"]/g, m => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;' })[m]); }
+
+/* ===================== 替换指令 PATCH =====================
+   dir: 'toA' → 用「B 侧那张」（或本地图）替换进 **A 包**   （卡片上 ◀）
+        'toB' → 用「A 侧那张」（或本地图）替换进 **B 包**   （卡片上 ▶）
+   custom: { name, bytes } —— 本地图片；有它时「源」就是本地图，dir 只决定替换进哪个包
+========================================================== */
+const PATCH = new Map();
+let BUILD_PLAN = null;                 // 待出包的清单（askBuildTarget 填，doBuild 用）
+
+/* ★★ 预览取图（2026-10-11 修）：这一侧如果是「替换目标」，预览就该显示
+   替换后的图（本地图 / 对侧同名图），而不是包里的原图。
+   优先级：本地图 > 对侧同名图 > 原图（拿不到替换源时退回原图）。
+   返回 { bytes(完整 PNG), replaced, why }。 */
+function viewBytes(side, key, item, pkgBytes){
+  const orig = () => pkgBytes.subarray(item.pngOff, item.pngOff + item.size);
+  const p = PATCH.get(key);
+  if (!p || !item) return { bytes: orig(), replaced: false, why: 'orig' };
+  const isTarget = (p.dir === 'toA' && side === 'a') || (p.dir === 'toB' && side === 'b');
+  if (!isTarget) return { bytes: orig(), replaced: false, why: 'orig' };
+  if (p.custom && p.custom.bytes) return { bytes: p.custom.bytes, replaced: true, why: 'local' };
+  const os = S[p.dir === 'toA' ? 'B' : 'A'];
+  const oi = (os && os.bytes) ? (os.items || []).find(x => x.key === key) : null;
+  if (oi) return { bytes: os.bytes.subarray(oi.pngOff, oi.pngOff + oi.size), replaced: true, why: 'other' };
+  return { bytes: orig(), replaced: false, why: 'missing' };
+}
+/* 预览 URL：缓存键带「内容签名」—— 替换状态一变就自动重建（旧版固定缓存 ⇒ 换了本地图也不更新） */
+function viewUrl(side, key, item, pkgBytes){
+  const v = viewBytes(side, key, item, pkgBytes);
+  const p = PATCH.get(key);
+  const sig = side + '|' + v.bytes.length + '|' + (v.replaced ? (v.why + (p && p.custom ? p.custom.name : '')) : 'orig');
+  if (item._urlSig !== sig){
+    if (item._url){ try { URL.revokeObjectURL(item._url); } catch (e){} }
+    item._url = URL.createObjectURL(new Blob([v.bytes], { type: 'image/png' }));
+    item._urlSig = sig;
+  }
+  return { url: item._url, replaced: v.replaced };
+}
+/* ★ 字体替换指令：slot('A'|'B') → Map<tar 条目起始 pos, {name, short, bytes, srcName, srcSize, kind}> */
+const FPATCH = { A: new Map(), B: new Map() };
+function fontCount(slot){ const m = FPATCH[slot]; return m ? m.size : 0; }
+function fontPatchTotal(){ try { return fontCount('A') + fontCount('B'); } catch (e){ return 0; } }
+
+function patchToggle(key, dir){
+  const cur = PATCH.get(key);
+  if (cur && cur.dir === dir && !cur.custom) PATCH.delete(key);      // 再点一次 = 取消
+  else PATCH.set(key, { dir, custom: cur ? cur.custom : null });
+  syncPatchUI();
+}
+function patchSetCustom(key, custom){          // 从大图里「换成本地图」时调用
+  const cur = PATCH.get(key);
+  const dir = cur ? cur.dir : (S.A ? 'toA' : 'toB');
+  PATCH.set(key, { dir, custom });
+  syncPatchUI();
+}
+function patchCounts(){
+  let toA = 0, toB = 0, cu = 0;
+  for (const p of PATCH.values()){ if (p.dir === 'toA') toA++; else toB++; if (p.custom) cu++; }
+  return { toA, toB, cu, total: PATCH.size };
+}
+/* 更新单张卡片的按钮状态（自定义图时按钮带 📁） */
+function refreshCardPatch(key){
+  const c = CARDS_BY_KEY.get(key);
+  if (!c) return;
+  const p = PATCH.get(key);
+  const set = (b, side) => {
+    if (!b) return;
+    const on = !!(p && p.dir === side);
+    b.classList[on ? 'add' : 'remove']('on');
+    b.classList[(p && p.custom && on) ? 'add' : 'remove']('cu');
+    const tag = (p && p.custom && on) ? '📁 ' : '';
+    try {
+      b.textContent = (side === 'toA') ? ('◀ ' + tag + '替换进 A') : (tag + '替换进 B ▶');
+    } catch (e){}
+  };
+  set(c.pA, 'toA');
+  set(c.pB, 'toB');
+}
+function syncPatchUI(){
+  for (const key of CARDS_BY_KEY.keys()) refreshCardPatch(key);
+  renderOps();
+}
+/* 顶部操作条 */
+function renderOps(){
+  const el = document.getElementById('ops');
+  if (!el) return;
+  const c = patchCounts();
+  const nf = fontPatchTotal();
+  let nd = 0; try { nd = declTotal(); } catch (e){}
+  let nSel = 0, miss = 0, nsz = 0;
+  try { nSel = SELECT.size; } catch (e){}          // SELECT 在后文定义，防御 TDZ
+  try {
+    if (c.total){ const pl = collectPatches(); miss = pl.miss.length; nsz = sizeIssues(pl).length; }
+  } catch (e){}
+  el.innerHTML =
+    '<span class="oc">待替换 <b>' + c.total + '</b> 张' + (nf ? ' + <b>' + nf + '</b> 字体' : '') +
+      (nd ? ' + <b>' + nd + '</b> 处声明' : '') + '</span>' +
+    '<span class="tip">◀ 替换进 A：' + c.toA + '　▶ 替换进 B：' + c.toB + '　其中本地图 ' + c.cu + ' 张' +
+      (nsz ? '　<b style="color:#b45309">⚠ ' + nsz + ' 张尺寸与目标不同（出包前会确认）</b>' : '') +
+      (miss ? '　<b style="color:#c2410c">⚠ ' + miss + ' 张源缺失（出包时会跳过）</b>' : '') + '</span>' +
+    '<span class="sp2"></span>' +
+    '<button id="opsToA" title="把所有勾选的图设为「用 B 侧替换进 A」">批量 ◀ 替换进 A（' + nSel + '）</button>' +
+    '<button id="opsToB" title="把所有勾选的图设为「用 A 侧替换进 B」">批量 ▶ 替换进 B（' + nSel + '）</button>' +
+    '<button id="opsClear" title="清空全部替换指令（含字体、声明）">清除替换</button>' +
+    '<button id="opsDecl" title="修改 kzb 内的尺寸声明（可按当前尺寸整组批量改）">📐 声明' +
+      (nd ? '（' + nd + '）' : '') + '</button>' +
+    '<button id="opsFont" title="替换 app.sv 里的 ttf 字体">🔤 字体' + (nf ? '（' + nf + '）' : '') + '</button>' +
+    '<button class="go" id="opsGo"' + ((c.total || nf) ? '' : ' disabled') +
+      ' title="可生成 app.sv 或 .kzb —— 点开后再选">⚙ 生成…</button>';
+  const g = id => document.getElementById(id);
+  const bA = g('opsToA'), bB = g('opsToB'), bC = g('opsClear'), bG = g('opsGo'), bF = g('opsFont'), bD = g('opsDecl');
+  if (bA) bA.onclick = () => batchPatch('toA');
+  if (bB) bB.onclick = () => batchPatch('toB');
+  if (bC) bC.onclick = () => {
+    PATCH.clear(); FPATCH.A.clear(); FPATCH.B.clear();
+    try { DPATCH.A.clear(); DPATCH.B.clear(); } catch (e){}
+    syncPatchUI();
+  };
+  if (bD) bD.onclick = () => openDeclDlg();
+  if (bF) bF.onclick = () => openFontDlg();
+  if (bG) bG.onclick = () => makePackage();
+}
+function batchPatch(dir){
+  const keys = [...SELECT];
+  if (!keys.length){ alertMsg('warn', '先在卡片左上角勾选要批量设置的图片（勾选框），再点批量按钮。'); return; }
+  const amap = new Map((S.A ? S.A.items : []).map(i => [i.key, i]));
+  const bmap = new Map((S.B ? S.B.items : []).map(i => [i.key, i]));
+  let n = 0, skip = 0;
+  for (const k of keys){
+    const cur = PATCH.get(k);
+    if (dir === 'toA' && !bmap.has(k)){ skip++; continue; }         // 源侧没有
+    if (dir === 'toB' && !amap.has(k)){ skip++; continue; }
+    PATCH.set(k, { dir, custom: cur ? cur.custom : null });
+    n++;
+  }
+  syncPatchUI();
+  alertMsg(n ? 'ok' : 'warn', '已把 ' + n + ' 张设为「' + (dir === 'toA' ? '用 B 替换进 A' : '用 A 替换进 B') +
+    '」' + (skip ? '；' + skip + ' 张因源侧没有同名图被跳过' : '') + '。');
+}
+
+/* ===================== 📐 尺寸声明（kzb 内的渲染尺寸） =====================
+   声明结构：[u32 126][f32 高] …（中间可插其它 tag，如 [127][1.0]）… [u32 64][f32 宽]
+     —— 写在节点/纹理名【之前】，宽度字段偏移 = 64 标签 + 4。
+   声明 = 引擎渲染目标尺寸 ⇒ 按它拉伸、不保持宽高比。贴图比声明宽就会被压扁
+     （我们的数字贴图 93 宽、原厂声明 73 宽，就是这个坑）。
+   ★ 只改「高/宽」那 4 字节 f32 ⇒ 等长覆盖，整体长度与所有偏移都不变。
+   ★ 改动在【重建之前】写进底包副本；重建时未替换条目是「整段原样搬运」⇒ 必然带上。
+   ★ 批量：按「当前尺寸」分组，一次改一整组（数字贴图那种同尺寸的最省事）。
+========================================================== */
+const DPATCH = { A: new Map(), B: new Map() };   // slot → Map<声明起始偏移 p, {hOff,wOff,h,w}>
+let DECL_SLOT = 'A';
+let DECL_ROWS = [];
+
+/* 按「应用后的当前尺寸」分组（叠加 DPATCH 的待改动值） */
+function declRows(slot){
+  const base = S[slot];
+  if (!base || !base.declsAll) return [];
+  const m = DPATCH[slot], g = new Map();
+  for (const d of base.declsAll){
+    const ov = m.get(d.p);
+    const h = (ov && ov.h != null) ? ov.h : d.h;
+    const w = (ov && ov.w != null) ? ov.w : d.w;
+    const key = h + '|' + w;
+    let e = g.get(key);
+    if (!e) g.set(key, e = { h, w, n: 0, names: [], dirty: false });
+    e.n++;
+    if (ov) e.dirty = true;
+    if (d.name) e.names.push(d.name.replace(/^kzb:\/\/[^/]*\//, ''));
+  }
+  return [...g.values()].sort((a, b) => b.n - a.n || a.h - b.h);
+}
+/* 把「当前尺寸 = h×w」这一整组改成 nh×nw（null = 该项不改） */
+function declApplyGroup(slot, h, w, nh, nw){
+  const base = S[slot];
+  if (!base || !base.declsAll) return 0;
+  const m = DPATCH[slot];
+  let n = 0;
+  for (const d of base.declsAll){
+    const ov = m.get(d.p);
+    const ch = (ov && ov.h != null) ? ov.h : d.h;
+    const cw = (ov && ov.w != null) ? ov.w : d.w;
+    if (Math.abs(ch - h) > 1e-6 || Math.abs(cw - w) > 1e-6) continue;   // 不属这一组
+    const cur = ov || { hOff: d.hOff, wOff: d.wOff, h: null, w: null };
+    if (nh != null) cur.h = nh;
+    if (nw != null) cur.w = nw;
+    if (cur.h == null && cur.w == null) m.delete(d.p); else m.set(d.p, cur);
+    n++;
+  }
+  return n;
+}
+/* 把 DPATCH 的改动写进底包字节的【副本】（等长覆盖），返回新数组 */
+function declApplyBytes(u8, dmap){
+  const out = u8.slice();
+  const dv = new DataView(out.buffer, out.byteOffset, out.byteLength);
+  for (const ov of dmap.values()){
+    if (ov.h != null) dv.setFloat32(ov.hOff, ov.h, true);
+    if (ov.w != null) dv.setFloat32(ov.wOff, ov.w, true);
+  }
+  return out;
+}
+function declCount(slot){ try { return DPATCH[slot].size; } catch (e){ return 0; } }
+function declTotal(){ return declCount('A') + declCount('B'); }
+
+function openDeclDlg(){
+  if (!S.A && !S.B){ alertMsg('warn', '先加载文件（A / B 槽至少一个）'); return; }
+  DECL_SLOT = S.A ? 'A' : 'B';
+  renderDeclDlg();
+  const d = document.getElementById('declDlg');
+  if (d && d.showModal) d.showModal();
+  else alertMsg('warn', '当前浏览器不支持弹窗，请用较新的 Chrome / Edge。');
+}
+function closeDeclDlg(){ const d = document.getElementById('declDlg'); if (d && d.close) d.close(); }
+function declSwitchSlot(s){ DECL_SLOT = s; renderDeclDlg(); }
+function declClearSlot(){
+  DPATCH[DECL_SLOT].clear();
+  renderDeclDlg(); renderOps();
+  declSay('已撤销该底包的全部声明改动。', '');
+}
+function declSay(txt, cls){
+  const e = document.getElementById('declMsg');
+  if (e){ e.className = 'dmsg' + (cls ? ' ' + cls : ''); e.textContent = txt || ''; }
+}
+function declApplyUI(i){
+  const r = DECL_ROWS[i];
+  if (!r) return;
+  const hEl = document.getElementById('dh_' + i), wEl = document.getElementById('dw_' + i);
+  const nh = (hEl && hEl.value.trim() !== '') ? parseFloat(hEl.value) : null;
+  const nw = (wEl && wEl.value.trim() !== '') ? parseFloat(wEl.value) : null;
+  if (nh == null && nw == null){ declSay('先把「新高」或「新宽」填一个值，再点「整组应用」。', 'warn'); return; }
+  if (nh != null && !(nh > 0 && nh <= 3000)){ declSay('高度要在 0 ~ 3000 之间。', 'warn'); return; }
+  if (nw != null && !(nw > 0 && nw <= 3000)){ declSay('宽度要在 0 ~ 3000 之间。', 'warn'); return; }
+  const n = declApplyGroup(DECL_SLOT, r.h, r.w, nh, nw);
+  renderDeclDlg(); renderOps();
+  declSay('✓ 已把 ' + r.h + ' × ' + r.w + ' 这 ' + n + ' 处声明改为 ' +
+    (nh != null ? nh : r.h) + ' × ' + (nw != null ? nw : r.w) + '（出包时生效）', 'on');
+}
+function renderDeclDlg(){
+  const body = document.getElementById('declBody');
+  if (!body) return;
+  const canA = !!(S.A && S.A.declsAll), canB = !!(S.B && S.B.declsAll);
+  if (!S[DECL_SLOT] || !S[DECL_SLOT].declsAll) DECL_SLOT = canA ? 'A' : (canB ? 'B' : 'A');
+  const slot = DECL_SLOT, base = S[slot];
+  if (!base || !base.declsAll){
+    body.innerHTML = '<h3>📐 尺寸声明</h3><div class="hint">还没加载文件。</div>' +
+      '<div class="pfoot"><button onclick="closeDeclDlg()">关闭</button></div>';
+    return;
+  }
+  const rows = DECL_ROWS = declRows(slot);
+  const dirty = DPATCH[slot].size;
+  let tab = '';
+  for (let i = 0; i < rows.length; i++){
+    const r = rows[i];
+    const nm = r.names.slice(0, 8).map(x => '<span class="dchip">' + esc(x) + '</span>').join('') +
+      (r.names.length > 8 ? '<span class="dchip">…共 ' + r.names.length + ' 个有名</span>' : '');
+    tab += '<tr class="' + (r.dirty ? 'dirty' : '') + '">' +
+      '<td class="sz">' + r.h + ' × ' + r.w + '</td>' +
+      '<td class="cnt">' + r.n + ' 处</td>' +
+      '<td>高 <input type="number" step="1" min="1" max="3000" id="dh_' + i + '" placeholder="' + r.h + '">' +
+        '　宽 <input type="number" step="1" min="1" max="3000" id="dw_' + i + '" placeholder="' + r.w + '">' +
+        '　<button onclick="declApplyUI(' + i + ')">整组应用</button></td>' +
+      '<td><div class="names">' + (nm ||
+        '<span style="color:#9aa5b5">（无名 —— 后面跟的是节点引用 / 变换参数）</span>') + '</div></td>' +
+      '</tr>';
+  }
+  body.innerHTML =
+    '<h3>📐 尺寸声明（kzb 内的渲染尺寸）</h3>' +
+    '<div class="sub">声明 = 引擎渲染时的目标尺寸，<b>按它拉伸、不保持宽高比</b>。' +
+      '贴图比声明宽就会被压扁（例：数字贴图 93 宽、原厂声明 73 宽）。' +
+      '下面按「当前尺寸」分组，<b>填新高 / 新宽后点「整组应用」，一次改一整组</b>（留空 = 该项不改）。</div>' +
+    '<div class="pbtns" style="margin-bottom:4px">' +
+      (canA ? '<button' + (slot === 'A' ? ' class="pri"' : '') + ' onclick="declSwitchSlot(\'A\')">A 槽底包</button>' : '') +
+      (canB ? '<button' + (slot === 'B' ? ' class="pri"' : '') + ' onclick="declSwitchSlot(\'B\')">B 槽底包</button>' : '') +
+    '</div>' +
+    '<div class="dwrap"><table class="dtbl"><thead><tr>' +
+      '<th>当前尺寸</th><th>处数</th><th>改成（留空 = 不改）</th><th>涉及的节点 / 纹理</th>' +
+    '</tr></thead><tbody>' + tab + '</tbody></table></div>' +
+    '<div class="dsum">底包共扫到 <b>' + base.declsAll.length + '</b> 处声明；本次待应用改动 <b>' + dirty + '</b> 处' +
+      (dirty ? '　<button onclick="declClearSlot()">全部撤销</button>' : '') + '</div>' +
+    '<div id="declMsg" class="dmsg"></div>' +
+    '<div class="note">' +
+      '· 只改「高 / 宽」那 4 字节浮点 ⇒ <b>等长覆盖</b>，不动任何偏移，kzb 体积不变。<br>' +
+      '· 改动在<b>出包时生效</b>，会写进 <b>app.sv</b> 和 <b>.kzb</b> 两种产物。<br>' +
+      '· 声明后面跟「节点引用 / 变换参数」的那几条是<b>无名</b>的（正常现象），按尺寸分组一起改即可。' +
+    '</div>' +
+    '<div class="pfoot"><button onclick="closeDeclDlg()">关闭</button></div>';
+}
+
+/* ===================== 🔤 字体替换（app.sv 的 tar 条目） ===================== */
+let PICK_FONT = null;                    // 等待 fileTtf 回填的目标 {slot, pos}
+const FONT_PREVIEW = new Map();          // 'slot/pos' → FontFace family 名
+let PREV_FONT_KEY = '';                  // 预览区当前字体（'' = 系统默认）
+let PREV_SIZE = 26;
+
+const FONT_SAMPLES = [
+  ['数字',       '0123456789　0 1 2 3 4 5 6 7 8 9'],
+  ['车速/单位',  '128 km/h　　260 km/h　　PRND'],
+  ['大写',       'ABCDEFGHIJKLMNOPQRSTUVWXYZ'],
+  ['小写',       'abcdefghijklmnopqrstuvwxyz'],
+  ['模式词',     'NORMAL　SPORT　ECO　EV　HEV'],
+  ['中文',       '时速　里程　电量　油耗　续航　总里程　小计里程'],
+  ['符号',       '− + . , : / % ° · （）']
+];
+
+function openFontDlg(){
+  PICK_FONT = null;
+  renderFontDlg();
+  const d = document.getElementById('fontDlg');
+  if (d && d.showModal) d.showModal();
+  else alertMsg('warn', '当前浏览器不支持弹窗（<dialog>），打不开字体面板。请用较新的 Chrome / Edge。');
+}
+function closeFontDlg(){ const d = document.getElementById('fontDlg'); if (d && d.close) d.close(); }
+
+/* 在另一槽里找同名字体条目（两个包的 tar 里字体路径一致，按全名精确匹配） */
+function fontInOther(slot, name){
+  const other = (slot === 'A') ? 'B' : 'A';
+  const s = S[other];
+  if (!s || !s.sv || !s.sv.fonts) return null;
+  return s.sv.fonts.find(f => f.name === name) || null;
+}
+/* 从某槽的 tar 里按条目取字体字节（返回视图；要留存请自行拷贝） */
+function fontBytesOf(slot, ent){
+  const s = S[slot];
+  if (!s || !s.sv || !ent) return null;
+  return s.sv.tar.subarray(ent.pos + 512, ent.pos + 512 + ent.size);
+}
+/* ★ 双向替换之一：用「另一槽」的同名字体换进本槽（同一来源再点 = 取消） */
+function fontPatchToggle(slot, pos, from){
+  const s = S[slot];
+  if (!s || !s.sv || !s.sv.fonts){ alertMsg('err', slot + ' 槽没有可用的 app.sv 外壳'); return; }
+  const ent = s.sv.fonts.find(f => f.pos === pos);
+  if (!ent){ alertMsg('err', '找不到该字体条目（包可能已换，请重新加载）'); return; }
+  const cur = FPATCH[slot].get(pos);
+  if (cur && cur.from === from){ clearFont(slot, pos); return; }        // 同方向再点 = 取消
+  const oe = fontInOther(slot, ent.name);
+  if (!oe){ alertMsg('warn', from + ' 槽里没有同名字体【' + ent.short + '】，没法这样换。'); return; }
+  const view = fontBytesOf(from, oe);
+  if (!view){ alertMsg('err', '读取 ' + from + ' 槽的字体失败'); return; }
+  const bytes = new Uint8Array(view.length); bytes.set(view);           // 拷贝（tar 之后可能被换掉）
+  const kind = fontKind(bytes) || '未知类型';
+  FPATCH[slot].set(pos, { name: ent.name, short: ent.short, bytes, kind,
+                          srcName: from + ' 包的 ' + ent.short, srcSize: bytes.length, from });
+  ensurePreviewFont(slot, pos, bytes).then(() => {
+    PREV_FONT_KEY = slot + '/' + pos;
+    renderFontDlg();
+  }).catch(() => renderFontDlg());
+  syncPatchUI();
+  alertMsg('ok', '已用【' + from + ' 包】的 ' + ent.short + '（' + fmt(bytes.length) + ' B）替换进 ' +
+    slot + ' 包的同一字体。包内文件名保持 ' + ent.short + ' 不变。');
+}
+/* ★ 提取字体到本地（有替换时提取的是「替换后」那一份） */
+function extractFont(slot, pos){
+  const s = S[slot];
+  if (!s || !s.sv || !s.sv.fonts){ alertMsg('warn', slot + ' 槽没有可提取的字体'); return; }
+  const ent = s.sv.fonts.find(f => f.pos === pos);
+  if (!ent) return;
+  const cur = FPATCH[slot].get(pos);
+  let bytes;
+  if (cur) bytes = cur.bytes;
+  else { const v = fontBytesOf(slot, ent); bytes = new Uint8Array(v.length); bytes.set(v); }
+  if (!bytes || !bytes.length){ alertMsg('err', '字体内容为空，提取失败'); return; }
+  const url = URL.createObjectURL(new Blob([bytes], { type: 'font/ttf' }));
+  const a = document.createElement('a');
+  a.href = url; a.download = ent.short;
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  setTimeout(() => URL.revokeObjectURL(url), 20000);
+  alertMsg('ok', '已开始下载 ' + slot + ' 包的【' + ent.short + '】（' + fmt(bytes.length) + ' B' +
+    (cur ? '，替换后的版本' : '，原版') + '）');
+}
+function fontRows(slot){
+  const s = S[slot];
+  if (!s) return '<div class="note">' + slot + ' 槽还没加载文件。</div>';
+  if (!s.sv) return '<div class="note">' + slot + ' 槽（' + esc(s.file) +
+    '）加载的是纯 .kzb，没有 app.sv 外壳 ⇒ 不能换字体（请改选 app.sv 或整包 zip）。</div>';
+  const fonts = s.sv.fonts || [];
+  if (!fonts.length) return '<div class="note">这个 app.sv 的 tar 里没找到字体条目（.ttf / .otf / .ttc）。</div>';
+  const other = (slot === 'A') ? 'B' : 'A';
+  const otherOk = !!(S[other] && S[other].sv);          // 另一槽也加载了 app.sv ⇒ 才能互替
+  const rows = fonts.map(f => {
+    const cur = FPATCH[slot].get(f.pos);
+    const isA = (slot === 'A');
+    const srcSlot = isA ? 'B' : 'A';                       // 这一行的「另一侧」= 替换源
+    const oe = otherOk ? fontInOther(slot, f.name) : null;
+    const st = cur
+      ? '<span style="color:#15803d;font-weight:600">★ 待替换</span>' +
+        '<br><span style="color:#6c7686">来源：' + esc(cur.srcName) + '（' + fmt(cur.srcSize) + ' B · ' + esc(cur.kind) + '）</span>'
+      : '<span style="color:#6c7686">原版</span>' +
+        (oe ? '<br><span style="color:#98a2b3">' + srcSlot + ' 槽有同名字体，可互替</span>' : '');
+    const usable = otherOk && !!oe;
+    const dirBtn = '<button class="fbtn' + (usable && cur && cur.from === srcSlot ? ' on' : '') + '"' +
+      (usable ? ' onclick="fontPatchToggle(\'' + slot + '\',' + f.pos + ',\'' + srcSlot + '\')"' : ' disabled') +
+      ' title="' + (usable
+        ? '用 ' + srcSlot + ' 包里的同名字体，替换进 ' + slot + ' 包的这个字体（再点一次取消）'
+        : (otherOk ? srcSlot + ' 槽里没有同名字体' : '另一槽还没加载 app.sv')) + '">' +
+      (isA ? '◀ 用 B 换进 A' : '用 A 换进 B ▶') + '</button>';
+    const btns = dirBtn +
+      '<button class="fbtn" onclick="pickTtf(\'' + slot + '\',' + f.pos + ')">📁 本地字体…</button>' +
+      '<button class="fbtn" onclick="extractFont(\'' + slot + '\',' + f.pos + ')">💾 提取</button>' +
+      (cur ? '<button class="fbtn" onclick="clearFont(\'' + slot + '\',' + f.pos + ')">↺ 还原</button>' : '');
+    return '<tr>' +
+      '<td style="padding:6px 10px 6px 0;font:12px Consolas,monospace;word-break:break-all">' + esc(f.short) +
+        '<br><span style="color:#98a2b3;font-size:11px">' + esc(f.name.replace(/^\.\//, '')) + '</span>' +
+        '<br><span style="font-size:11.5px">' + st + '</span></td>' +
+      '<td style="padding:6px 10px;white-space:nowrap;font:12px Consolas,monospace;vertical-align:top">' + fmt(f.size) + ' B</td>' +
+      '<td style="padding:6px 0 6px 10px;white-space:normal;min-width:340px">' + btns + '</td>' +
+    '</tr>';
+  }).join('');
+  return '<table style="border-collapse:collapse;width:100%"><tbody>' + rows + '</tbody></table>';
+}
+/* 槽标题：只显示用户选的那个文件名（去掉 " → xxx.kzb" 那段加载链尾巴） */
+function slotLabel(slot){
+  const s = S[slot];
+  return s ? String(s.file || '').split(' → ')[0] : '（未加载）';
+}
+function fontSection(slot){
+  const s = S[slot], n = fontCount(slot);
+  return '<div style="margin:14px 0 6px;font-weight:700;font-size:13px">' + slot + ' 槽：' +
+    (s ? esc(slotLabel(slot)) : '<span style="color:#c2410c">未加载</span>') +
+    (n ? '　<span style="color:#15803d">（已选 ' + n + ' 个替换）</span>' : '') + '</div>' +
+    ((s && s.sv)
+      ? '<div style="font-size:11.5px;color:#6c7686;margin:0 0 6px;line-height:1.5">' +
+        '字体取自这个 app.sv 的 <b>tar 条目</b>（<code>./base/app/rc_hmi/Resource_Font/</code>），' +
+        '<b>不在 kzb 里</b> —— kzb 里放的是 932 张 PNG；替换字体改的也是 tar。' +
+        '<br>注：加载链里那个 <code>bic_byd_stha.kzb</code> 是给图片用的；' +
+        (s.sv.fonts || []).length + ' 个字体的位置都在 tar 的其他偏移上。</div>'
+      : '') +
+    fontRows(slot);
+}
+function renderFontDlg(){
+  const body = document.getElementById('fontBody');
+  if (!body) return;
+  const opts = ['<option value="">系统默认（对照）</option>'];
+  for (const slot of ['A', 'B']){
+    for (const [pos, f] of FPATCH[slot]){
+      const k = slot + '/' + pos;
+      opts.push('<option value="' + k + '"' + (PREV_FONT_KEY === k ? ' selected' : '') + '>新字体：' +
+        esc(f.srcName) + '　→　' + esc(f.short) + '</option>');
+    }
+  }
+  const fam = (PREV_FONT_KEY && FONT_PREVIEW.has(PREV_FONT_KEY)) ? FONT_PREVIEW.get(PREV_FONT_KEY) : null;
+  const ff = fam ? ("'" + fam + "', sans-serif") : 'inherit';
+  const samples = FONT_SAMPLES.map(([t, s]) =>
+    '<div style="margin:3px 0;white-space:nowrap">' +
+      '<span style="color:#98a2b3;font-size:11px">' + t + '　</span>' +
+      '<span data-smp="1" style="font-family:' + ff + ';font-size:' + PREV_SIZE + 'px">' + esc(s) + '</span>' +
+    '</div>').join('');
+  body.innerHTML =
+    '<h3>🔤 替换 app.sv 里的字体（TTF / OTF）</h3>' +
+    '<div class="sub">换的是 app.sv 里 <code>Resource_Font</code> 目录下的字体文件。</div>' +
+    '<div class="note">' +
+      '<b>文件名完全不用管</b>：替换是<b>按 tar 里的条目位置</b>写入的，<b>包内文件名永远保持原样</b> —— ' +
+      '你选的本地字体叫什么名字都不会改（也不需要改名）。' +
+      '<br>出包时会对字体做<b>逐字节自检</b>，对不上就不给包。' +
+      '<br>· 两个包都加载了就能<b>互相换</b>：A 表里点「◀ 用 B 换进 A」、B 表里点「用 A 换进 B ▶」（再点一次取消）。' +
+      '<br>· 点【💾 提取】可把字体存到电脑上（若该字体已设替换，存的是<b>替换后</b>那份）。' +
+      '<br>⚠ 雅黑 / BydCluster 这类中文字体单个 14~24 MB，替换后 app.sv 会明显变大，属正常。' +
+    '</div>' +
+    fontSection('A') + fontSection('B') +
+    '<div style="margin:16px 0 6px;font-weight:700;font-size:13px">预览</div>' +
+    '<div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin-bottom:8px">' +
+      '<select id="prevSel" style="min-width:280px;padding:4px 6px">' + opts.join('') + '</select>' +
+      '<label style="font-size:12px;color:#475467;display:flex;align-items:center;gap:6px">字号 ' +
+        '<input id="prevSize" type="range" min="14" max="46" value="' + PREV_SIZE + '"></label>' +
+      '<span id="prevSizeN" style="font:12px Consolas,monospace">' + PREV_SIZE + 'px</span>' +
+    '</div>' +
+    '<div id="fprev" style="border:1px solid var(--line);border-radius:8px;padding:10px 12px;background:#fff;overflow:auto">' +
+      samples + '</div>' +
+    '<div class="note" style="margin-top:12px">关闭按钮在<b>右上角</b>（✕）。</div>';
+  const sel = document.getElementById('prevSel');
+  if (sel) sel.onchange = () => { PREV_FONT_KEY = sel.value; renderFontDlg(); };
+  const rg = document.getElementById('prevSize');
+  if (rg) rg.oninput = () => {
+    PREV_SIZE = +rg.value;
+    const n = document.getElementById('prevSizeN');
+    if (n) n.textContent = PREV_SIZE + 'px';
+    const f = document.getElementById('fprev');
+    if (f) for (const sp of f.querySelectorAll('span[data-smp]')) sp.style.fontSize = PREV_SIZE + 'px';
+  };
+}
+/* 点「选择本地字体…」→ 记下目标，交给隐藏的 file 输入 */
+function pickTtf(slot, pos){
+  if (!S[slot] || !S[slot].sv) { alertMsg('err', slot + ' 槽没有可用的 app.sv 外壳'); return; }
+  PICK_FONT = { slot, pos };
+  const inp = document.getElementById('fileTtf');
+  if (!inp){ alertMsg('err', '页面里没有字体文件输入控件'); return; }
+  inp.value = '';
+  inp.click();
+}
+function clearFont(slot, pos){
+  if (!FPATCH[slot]) return;
+  FPATCH[slot].delete(pos);
+  const k = slot + '/' + pos;
+  FONT_PREVIEW.delete(k);
+  if (PREV_FONT_KEY === k) PREV_FONT_KEY = '';
+  renderFontDlg();
+  syncPatchUI();
+}
+/* 把选到的字体文件装进 FPATCH（含校验 + 预览用 FontFace 加载） */
+async function setFontFile(slot, pos, file){
+  const s = S[slot];
+  if (!s || !s.sv || !s.sv.fonts){ alertMsg('err', slot + ' 槽没有 app.sv 外壳，换不了字体'); return; }
+  const ent = s.sv.fonts.find(f => f.pos === pos);
+  if (!ent){ alertMsg('err', '找不到目标字体条目（可能包已换，请重新加载）'); return; }
+  try {
+    const bytes = new Uint8Array(await file.arrayBuffer());
+    const kind = fontKind(bytes);
+    if (!kind) throw new Error('这不像是字体文件（已认 TTF / OTF / TTC / WOFF / WOFF2）—— 确认一下选的是字体文件');
+    if (bytes.length < 1024) throw new Error('文件只有 ' + fmt(bytes.length) + ' B，不像有效字体');
+    FPATCH[slot].set(pos, { name: ent.name, short: ent.short, bytes, kind,
+                            srcName: file.name, srcSize: bytes.length, from: 'local' });
+    await ensurePreviewFont(slot, pos, bytes);
+    PREV_FONT_KEY = slot + '/' + pos;                 // 预览自动切到刚选的字体
+    renderFontDlg();
+    syncPatchUI();
+    alertMsg('ok', '✓ 已把【' + ent.short + '】的替换源设为：' + file.name +
+      '（' + fmt(bytes.length) + ' B · ' + kind + '）。包内文件名保持 ' + ent.short + ' 不变。');
+  } catch (e){
+    alertMsg('err', '字体不可用：' + ((e && e.message) || e));
+  }
+}
+async function ensurePreviewFont(slot, pos, bytes){
+  const key = slot + '/' + pos;
+  if (FONT_PREVIEW.has(key)) return FONT_PREVIEW.get(key);
+  const fam = 'kbzfont_' + Math.random().toString(36).slice(2, 9);
+  const ab = bytes.buffer.slice(bytes.byteOffset, bytes.byteOffset + bytes.byteLength);
+  const face = new FontFace(fam, ab);
+  await face.load();
+  document.fonts.add(face);
+  FONT_PREVIEW.set(key, fam);
+  return fam;
+}
+
+
+/* ===================== 大图对比 ===================== */
+function pane(which, i, srcBytes, side, key){
+  if (!i) return '<div class="pane"><div class="h">' + which + '</div><div class="box" style="color:#98a2b3">（这个包没有此资源）</div></div>';
+  const v = viewUrl(side, key, i, srcBytes);
+  const url = v.url;
+  const SIDE = String(side).toUpperCase();
+  return '<div class="pane"><div class="h">' + which +
+    (v.replaced ? '　<b style="color:#7c3aed">（替换后预览）</b>' : '') + '</div>' +
+    '<div class="box" data-side="' + side + '"><img src="' + url + '"></div>' +
+    '<div class="i">' + esc(i.base) + '<br>' + i.w + '×' + i.h + ' · ' + fmt(i.size) + ' B' +
+      (i.decl
+        ? '<br><b style="color:' + (declBad(i) ? '#c2410c' : '#6b7280') + '">声明 ' +
+          (Math.round(i.decl[1] * 100) / 100) + '×' + (Math.round(i.decl[0] * 100) / 100) +
+          (i.declMulti ? '（多值）' : '') + (declBad(i) ? ' ★ 会被拉伸/压扁' : ' = 实际 ✓') + '</b>'
+        : '<br><span style="color:#6b7280">无尺寸声明（显示尺寸由布局决定）</span>') +
+    '</div>' +
+    '<button class="pickbtn" data-pick="' + SIDE + '" title="从电脑里选一张 PNG，替换进 ' + SIDE +
+      ' 包里的这张资源">📁 换成本地图（替换进 ' + SIDE + ' 包）…</button>' +
+    '</div>';
+}
+function openViewer(r){
+  const body = document.getElementById('dlgBody');
+  let extra = '';
+  if (r.st === 'solo'){
+    extra = '单包模式：只加载了一个包，没有第二个包可对比。';
+  } else if (r.st !== 'same'){
+    if (!r.a) extra = '这个资源只有 B 有。';
+    else if (!r.b) extra = '这个资源只有 A 有。';
+    else if (r.a.w !== r.b.w || r.a.h !== r.b.h) extra = '尺寸不同：A ' + r.a.w + '×' + r.a.h + '，B ' + r.b.w + '×' + r.b.h + '。';
+    else extra = '尺寸相同，但像素内容不同（大小差 ' + fmt(r.a.size - r.b.size) + ' B）。';
+  } else extra = '两个包里这张图完全一致。';
+  const pa = S.A ? pane('A　' + S.A.file, r.a, S.A.bytes, 'a', r.key) : '';
+  const pb = S.B ? pane('B　' + S.B.file, r.b, S.B.bytes, 'b', r.key) : '';
+  const p = PATCH.get(r.key);
+  let pstat = '';
+  if (p){
+    const srcDesc = p.custom ? ('本地图 <b>' + esc(p.custom.name) + '</b>') : (p.dir === 'toA' ? 'B 侧的同名图' : 'A 侧的同名图');
+    const tgt = (p.dir === 'toA') ? r.a : r.b;
+    let dim = '';
+    if (p.custom && tgt){
+      const wh = pngWH(p.custom.bytes);
+      if (wh){
+        const same = (wh.w === tgt.w && wh.h === tgt.h);
+        dim = '<br>尺寸：本地图 <b>' + wh.w + '×' + wh.h + '</b>　vs　目标 <b>' + tgt.w + '×' + tgt.h + '</b>　' +
+          (same ? '<b style="color:#15803d">一致 ✓</b>' : '<b style="color:#c2410c">不一致 ⚠（出包前会再确认一次）</b>');
+      }
+    }
+    pstat = '<div class="note" style="background:#f6f1ff;border-color:#ddd0f7;color:#5b21b6">' +
+      '当前替换：用 ' + srcDesc + ' → 替换进 <b>' + (p.dir === 'toA' ? 'A' : 'B') + ' 包</b>' +
+      '　（包内名字仍是 <b>' + esc(r.base) + '</b>，按位置写入，<b>不会改名</b>）' + dim +
+      '　<button id="vUnset" style="padding:2px 9px;font-size:12px">取消替换</button></div>';
+  }
+  body.innerHTML =
+    '<h3>' + esc(r.base) + '</h3>' +
+    '<div class="sub">' + esc(r.key) + ' · 状态：<b>' + ST_TXT[r.st] + '</b></div>' +
+    '<div class="cmp' + ((!r.a || !r.b) ? ' one' : '') + '">' + pa + pb + '</div>' +
+    pstat +
+    '<div class="note">' + extra + '</div>';
+  VIEWER_R = r;
+  const un = body.querySelector ? body.querySelector('#vUnset') : null;
+  if (un) un.onclick = () => { PATCH.delete(r.key); syncPatchUI(); openViewer(r); };
+  const picks = (body.querySelectorAll ? body.querySelectorAll('.pickbtn') : []) || [];
+  for (const b of picks){
+    b.onclick = () => pickLocalFor(r.key, b.getAttribute('data-pick'));
+  }
+  document.getElementById('dlg').showModal();
+  if (preOn()) premulViewer();
+}
+/* ---- 选一张本地 PNG 作为替换源 ---- */
+let PICK_FOR = null;
+function pickLocalFor(key, side){
+  if (!S[side]){ alertMsg('warn', side + ' 槽还没加载包，没法替换进去。'); return; }
+  const it = (S[side].items || []).find(x => x.key === key);
+  if (!it){ alertMsg('warn', side + ' 包里没有这张资源（' + key + '），换成本地图也没地方放。'); return; }
+  /* 纯 .kzb 也允许换本地图（2026-10-11 放开）—— 只是出包时只能导出 .kzb，
+     不能再像以前那样直接把入口堵掉。 */
+  if (!S[side].sv) alertMsg('info', side + ' 槽是纯 .kzb：本地图可以换，出包时只能导出 .kzb。');
+  PICK_FOR = { key, side };
+  const inp = document.getElementById('filePng');
+  if (!inp) return;
+  inp.value = '';
+  inp.click();
+}
+
+/* ===================== 选择与批量提取 ===================== */
+const SELECT = new Set();             // 已勾选的资源 key
+let VISIBLE = [];                     // 当前筛选结果（供「全选」用）
+let CARDS_BY_KEY = new Map();         // key → { el, ck }（draw 时重建）
+let PENDING = null;                   // 待提取的行
+
+function toggleSel(key, on){
+  if (on) SELECT.add(key); else SELECT.delete(key);
+  updateSelUI();
+}
+function updateSelUI(){
+  const n = SELECT.size;
+  const c = document.getElementById('selCount');
+  if (c) c.textContent = '已选 ' + n + ' 项';
+  const b = document.getElementById('btnSel');
+  if (b){ b.textContent = '提取选中（' + n + '）'; b.disabled = (n === 0); }
+  const bA = document.getElementById('opsToA'), bB = document.getElementById('opsToB');
+  if (bA) bA.textContent = '批量 ◀ 替换进 A（' + n + '）';
+  if (bB) bB.textContent = '批量 ▶ 替换进 B（' + n + '）';
+}
+function redrawSel(){
+  for (const [key, c] of CARDS_BY_KEY){
+    const on = SELECT.has(key);
+    if (c.ck) c.ck.checked = on;
+    if (c.el && c.el.classList) c.el.classList[on ? 'add' : 'remove']('sel');
+  }
+  updateSelUI();
+}
+
+/* ---- 提取前先确认「要哪一边」---- */
+function askExportMode(rows, title){
+  if (!rows || !rows.length){ alertMsg('warn', '没有可提取的图片。'); return; }
+  PENDING = rows;
+  const c = { onlyA: 0, onlyB: 0, diff: 0 };
+  rows.forEach(r => { if (r.st === 'onlyA') c.onlyA++; else if (r.st === 'onlyB') c.onlyB++; else if (r.st === 'diff') c.diff++; });
+  const nA = rows.filter(r => r.a).length, nB = rows.filter(r => r.b).length;
+  const body = document.getElementById('pickBody');
+  if (!body) return;
+  body.innerHTML =
+    '<h3>' + esc(title) + '　·　' + rows.length + ' 项</h3>' +
+    '<div class="sub">其中：仅 A 有 ' + c.onlyA + '　仅 B 有 ' + c.onlyB + '　内容不同 ' + c.diff + '</div>' +
+    '<div class="pick">' + ((nA && nB) ? '要提取哪一边的图片？' : '提取这些图片：') + '</div>' +
+    '<div class="pbtns">' +
+      (nA ? '<button' + (nB ? '' : ' class="pri"') + ' onclick="doExport(\'A\')">只要 A 的<b>' + nA + ' 张</b></button>' : '') +
+      (nB ? '<button' + (nA ? '' : ' class="pri"') + ' onclick="doExport(\'B\')">只要 B 的<b>' + nB + ' 张</b></button>' : '') +
+      ((nA && nB) ? '<button class="pri" onclick="doExport(\'AB\')">A 和 B 都要<b>' + (nA + nB) + ' 张</b></button>' : '') +
+    '</div>' +
+    '<label class="kp"><input type="checkbox" id="keepStruct" checked> 保留原目录结构（如 <code>Images/Num/num_0.png</code>）</label>' +
+    '<div class="note">选「A 和 B 都要」时，会在目标文件夹下自动新建 <code>A/</code> 与 <code>B/</code> 两个子文件夹，两边的图分别放进去。</div>' +
+    '<div class="pfoot"><button onclick="closePick()">取消</button></div>';
+  const d = document.getElementById('pickDlg');
+  if (d && d.showModal) d.showModal();
+}
+function closePick(){
+  const d = document.getElementById('pickDlg');
+  if (d && d.close) d.close();
+  PENDING = null;
+}
+
+/* ---- 生成文件清单（纯函数，便于回归测试）---- */
+const saneSeg = s => String(s).replace(/[\\:*?"<>|]/g, '_').replace(/^\.+$/, '_');
+function buildExportList(rows, mode, keepStruct){
+  const out = [];
+  const used = { A: new Set(), B: new Set() };
+  const rel = (r, item, side) => {
+    const dirs = [];
+    if (mode === 'AB') dirs.push(side);
+    if (keepStruct && r.cat && r.cat !== '(根)') dirs.push(r.cat.split('/').map(saneSeg).join('/'));
+    const name = saneSeg(item.base) || 'unnamed.png';
+    let path = dirs.concat(name).join('/');
+    const set = used[side];
+    if (set.has(path.toLowerCase())){                 // 不保结构时可能重名，自动加序号
+      const stem = name.replace(/\.png$/i, '');
+      let n = 2, cand;
+      do { cand = dirs.concat(stem + '_' + (n++) + '.png').join('/'); } while (set.has(cand.toLowerCase()));
+      path = cand;
+    }
+    set.add(path.toLowerCase());
+    return path;
+  };
+  for (const r of rows){
+    if ((mode === 'A' || mode === 'AB') && r.a) out.push({ path: rel(r, r.a, 'A'), item: r.a, bytes: S.A.bytes, side: 'A' });
+    if ((mode === 'B' || mode === 'AB') && r.b) out.push({ path: rel(r, r.b, 'B'), item: r.b, bytes: S.B.bytes, side: 'B' });
+  }
+  return out;
+}
+
+/* ---- 执行提取 ---- */
+async function doExport(mode){
+  const rows = PENDING;
+  if (!rows || !rows.length){ closePick(); return; }
+  const ks = document.getElementById('keepStruct');
+  const keep = ks ? !!ks.checked : true;
+  const files = buildExportList(rows, mode, keep);
+  closePick();
+  if (!files.length){ alertMsg('warn', '这一边没有可提取的图片。'); return; }
+  const sub = mode === 'AB' ? '（A/ 与 B/ 两个子文件夹）' : '';
+  if (window.showDirectoryPicker){
+    let dir;
+    try { dir = await window.showDirectoryPicker({ mode: 'readwrite', id: 'kzbpng' }); }
+    catch (e){
+      if (e && e.name === 'AbortError') return;                 // 用户自己取消
+      const zip = zipStore(files);                              // 环境受限（预览面板/非安全上下文）→ 自动降级
+      downloadBlob(new Blob([zip], { type: 'application/zip' }), 'kzb_png_extract.zip');
+      alertMsg('warn', '没法直接写文件夹（' + ((e && e.message) || e) + '），已改为打包 zip 下载（' + files.length + ' 张' + sub + '）。' +
+        '把 kzb_png_compare.html 双击用 Chrome / Edge 打开，就能直接选文件夹。');
+      return;
+    }
+    try {
+      let n = 0;
+      const dirCache = new Map();                       // 目录句柄缓存，避免每张图都重建目录
+      const getDir = async path => {
+        if (!path) return dir;
+        if (dirCache.has(path)) return dirCache.get(path);
+        const i = path.lastIndexOf('/');
+        const parent = await getDir(i < 0 ? '' : path.slice(0, i));
+        const h = await parent.getDirectoryHandle(path.slice(i + 1), { create: true });
+        dirCache.set(path, h);
+        return h;
+      };
+      for (const f of files){
+        const segs = f.path.split('/');
+        const fname = segs.pop();
+        const d = await getDir(segs.join('/'));
+        const fh = await d.getFileHandle(fname, { create: true });
+        const w = await fh.createWritable();
+        await w.write(new Blob([itemBytes(f)]));
+        await w.close();
+        n++;
+        if (n % 20 === 0 || n === files.length) alertMsg('info', '正在写入 ' + n + ' / ' + files.length + ' …');
+      }
+      alertMsg('ok', '已提取 ' + files.length + ' 张到「' + dir.name + '」' + sub + '。');
+    } catch (e){
+      alertMsg('err', '写入失败：' + ((e && e.message) || e) + '　—— 若是权限问题，重新点一次并在弹窗里允许写入。');
+    }
+  } else {
+    const zip = zipStore(files);
+    downloadBlob(new Blob([zip], { type: 'application/zip' }), 'kzb_png_extract.zip');
+    alertMsg('warn', '当前浏览器不支持直接写文件夹，已打包成 zip 下载（共 ' + files.length + ' 张' + sub + '）。建议用 Chrome / Edge 打开本页，就能直接选文件夹。');
+  }
+}
+
+/* ---- 降级方案：打包 ZIP（store 不压缩，PNG 本身已压）---- */
+function zipStore(files){
+  const enc = new TextEncoder();
+  const parts = [], cd = [];
+  let off = 0, cdSize = 0;
+  for (const f of files){
+    const nm = enc.encode(f.path), data = itemBytes(f), crc = crc32(data);
+    const lh = new Uint8Array(30 + nm.length), lv = new DataView(lh.buffer);
+    lv.setUint32(0, 0x04034b50, true); lv.setUint16(4, 20, true); lv.setUint16(6, 0x0800, true);
+    lv.setUint16(8, 0, true); lv.setUint16(10, 0, true); lv.setUint16(12, 0x2821, true);
+    lv.setUint32(14, crc, true); lv.setUint32(18, data.length, true); lv.setUint32(22, data.length, true);
+    lv.setUint16(26, nm.length, true);
+    lh.set(nm, 30);
+    parts.push(lh, data);
+    const ch = new Uint8Array(46 + nm.length), cv = new DataView(ch.buffer);
+    cv.setUint32(0, 0x02014b50, true); cv.setUint16(4, 20, true); cv.setUint16(6, 20, true);
+    cv.setUint16(8, 0x0800, true); cv.setUint16(10, 0, true); cv.setUint16(12, 0, true); cv.setUint16(14, 0x2821, true);
+    cv.setUint32(16, crc, true); cv.setUint32(20, data.length, true); cv.setUint32(24, data.length, true);
+    cv.setUint16(28, nm.length, true); cv.setUint32(42, off, true);
+    ch.set(nm, 46);
+    cd.push(ch); cdSize += ch.length;
+    off += lh.length + data.length;
+  }
+  const eo = new Uint8Array(22), ev = new DataView(eo.buffer);
+  ev.setUint32(0, 0x06054b50, true);
+  ev.setUint16(8, files.length, true); ev.setUint16(10, files.length, true);
+  ev.setUint32(12, cdSize, true); ev.setUint32(16, off, true);
+  const out = new Uint8Array(off + cdSize + 22);
+  let p = 0;
+  for (const x of parts) { out.set(x, p); p += x.length; }
+  for (const x of cd) { out.set(x, p); p += x.length; }
+  out.set(eo, p);
+  return out;
+}
+function downloadBlob(blob, name){
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = name;
+  a.click();
+}
+
+/* ===================== 导出 / 复制 ===================== */
+function exportCsv(){
+  const head = ['分类', '文件名', '状态', 'A尺寸', 'A字节', 'B尺寸', 'B字节', '完整路径'];
+  const lines = [head.join(',')];
+  for (const r of ROWS){
+    lines.push([r.cat, r.base, ST_TXT[r.st],
+      r.a ? r.a.w + 'x' + r.a.h : '', r.a ? r.a.size : '',
+      r.b ? r.b.w + 'x' + r.b.h : '', r.b ? r.b.size : '',
+      r.key].map(v => '"' + String(v).replace(/"/g, '""') + '"').join(','));
+  }
+  const blob = new Blob(['\ufeff' + lines.join('\r\n')], { type: 'text/csv;charset=utf-8' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'kzb_png_diff.csv';
+  a.click();
+}
+function copyKeys(){
+  const t = ROWS.filter(r => r.st !== 'same')
+    .map(r => ST_TXT[r.st] + '\t' + r.key + '\t' +
+      (r.a ? r.a.w + 'x' + r.a.h + ' ' + r.a.size + 'B' : '-') + '\t' +
+      (r.b ? r.b.w + 'x' + r.b.h + ' ' + r.b.size + 'B' : '-')).join('\n');
+  navigator.clipboard.writeText(t).then(
+    () => alert('已复制 ' + ROWS.filter(r => r.st !== 'same').length + ' 条差异到剪贴板'),
+    () => alert('复制失败，可改用「导出 CSV」'));
+}
+
+/* ===================== 事件绑定 ===================== */
+['A', 'B'].forEach(w => {
+  const slot = document.getElementById('slot' + w);
+  const inp = document.getElementById('file' + w);
+  slot.onclick = () => inp.click();
+  inp.onchange = () => { if (inp.files[0]) load(w, inp.files[0]); };
+  slot.ondragover = e => { e.preventDefault(); slot.style.borderColor = '#2563eb'; };
+  slot.ondragleave = () => { slot.style.borderColor = ''; };
+  slot.ondrop = e => {
+    e.preventDefault(); slot.style.borderColor = '';
+    const f = e.dataTransfer.files[0];
+    if (f) load(w, f);
+  };
+});
+/* 大图里「换成本地图」选文件 */
+(function(){
+  const inp = document.getElementById('filePng');
+  if (!inp) return;
+  inp.onchange = async () => {
+    const f = inp.files && inp.files[0];
+    const ctx = PICK_FOR;
+    PICK_FOR = null;
+    if (!f || !ctx) return;
+    try {
+      const bytes = new Uint8Array(await f.arrayBuffer());
+      if (!(bytes[0] === 0x89 && bytes[1] === 0x50 && bytes[2] === 0x4E && bytes[3] === 0x47))
+        throw new Error('这不是 PNG 文件（缺少 PNG 签名）');
+      if (bytes.length < 67) throw new Error('文件太小，不像是完整 PNG');
+      PATCH.set(ctx.key, { dir: ctx.side === 'A' ? 'toA' : 'toB', custom: { name: f.name, bytes } });
+      syncPatchUI();
+      if (VIEWER_R && VIEWER_R.key === ctx.key) openViewer(VIEWER_R);
+      alertMsg('ok', '已选用本地图「' + f.name + '」（' + fmt(bytes.length) + ' B）→ 替换进 ' + ctx.side + ' 包');
+    } catch (e){
+      alertMsg('err', '本地图读取失败：' + ((e && e.message) || e));
+    }
+  };
+})();
+/* 🔤 字体面板：选本地 TTF */
+(function(){
+  const inp = document.getElementById('fileTtf');
+  if (!inp) return;
+  inp.onchange = async () => {
+    const f = inp.files && inp.files[0];
+    const ctx = PICK_FONT;
+    PICK_FONT = null;
+    if (!f || !ctx) return;
+    await setFontFile(ctx.slot, ctx.pos, f);
+  };
+})();
+</script>
+</body>
+</html>
